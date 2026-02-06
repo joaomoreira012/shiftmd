@@ -54,11 +54,16 @@ services:
       - backend
     volumes:
       - ./frontend:/app
-    command: sh -c "corepack enable && pnpm install --frozen-lockfile && pnpm dev --host 0.0.0.0"
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/packages/shared/node_modules
+    command: sh -c "corepack enable && pnpm install --frozen-lockfile && cd apps/web && npx vite --host 0.0.0.0"
     ports:
       - "5173:5173"
     environment:
       - NODE_ENV=development
+      - CI=true
+      - VITE_API_PROXY_TARGET=http://backend:8080
 
 volumes:
   pgdata:

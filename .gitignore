@@ -4,6 +4,10 @@ node_modules/
 # Build outputs
 dist/
 frontend/apps/web/dist/
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+vite.config.d.ts.map
 
 # Backend
 backend/bin/
