@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+frontend/apps/web/dist/
+
+# Backend
+backend/bin/
+backend/coverage.out
+backend/config.local.yaml
+
+# Environment files
+.env
+*.env
+!.env.example
+!backend/.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Turbo
+frontend/.turbo/
+frontend/apps/web/.turbo/
+frontend/packages/shared/.turbo/
+
+# pnpm store
+.pnpm-store/
+
+# Test coverage
+coverage/

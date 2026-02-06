@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+database:
+  host: localhost
+  port: 5432
+  user: doctor_tracker
+  password: doctor_tracker
+  dbname: doctor_tracker
+  sslmode: disable
+
+jwt:
+  # Override via DT_JWT_SECRET environment variable in production
+  secret: ""
+  access_token_ttl: 15m
+  refresh_token_ttl: 168h  # 7 days
+
+cors:
+  allowed_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+    - "http://localhost:8081"
+
+google:
+  client_id: ""
+  client_secret: ""
+  redirect_url: "http://localhost:8080/api/v1/gcal/callback"

@@ -1,0 +1,19 @@
+{
+  "name": "doctor-tracker",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "dev:web": "turbo dev --filter=@doctor-tracker/web",
+    "dev:mobile": "turbo dev --filter=@doctor-tracker/mobile",
+    "clean": "turbo clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "pnpm@10.12.1"
+}
