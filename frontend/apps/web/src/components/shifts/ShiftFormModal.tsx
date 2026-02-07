@@ -46,6 +46,9 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
   const [patientsSeen, setPatientsSeen] = useState<string>(
     existingShift?.patients_seen != null ? String(existingShift.patients_seen) : ''
   );
+  const [outsideVisits, setOutsideVisits] = useState<string>(
+    existingShift?.outside_visits != null ? String(existingShift.outside_visits) : ''
+  );
 
   const selectedWorkplace = workplaces?.find((w) => w.id === workplaceId);
 
@@ -66,6 +69,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
 
     try {
       const patientsSeenNum = patientsSeen ? parseInt(patientsSeen, 10) : undefined;
+      const outsideVisitsNum = outsideVisits ? parseInt(outsideVisits, 10) : undefined;
 
       if (isEditing) {
         await updateMutation.mutateAsync({
@@ -76,6 +80,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
             title: title || undefined,
             notes: notes || undefined,
             patients_seen: patientsSeenNum,
+            outside_visits: outsideVisitsNum,
           },
         });
         toast.success(t('shifts.shiftUpdated'));
@@ -88,6 +93,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
           title: title || undefined,
           notes: notes || undefined,
           patients_seen: patientsSeenNum,
+          outside_visits: outsideVisitsNum,
         });
         toast.success(t('shifts.shiftCreated'));
       }
@@ -218,6 +224,21 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
                 step="1"
                 value={patientsSeen}
                 onChange={(e) => setPatientsSeen(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+              />
+            </div>
+          )}
+
+          {/* Outside Visits (only when workplace has outside visit pay) */}
+          {selectedWorkplace?.has_outside_visit_pay && (
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('shifts.outsideVisits')}</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={outsideVisits}
+                onChange={(e) => setOutsideVisits(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
               />
             </div>

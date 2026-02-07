@@ -71,6 +71,8 @@
     "perMonthShort": "per month",
     "hasConsultationPay": "Also pays per consultation",
     "consultationPayEnabled": "Consultation pay",
+    "hasOutsideVisitPay": "Also pays per outside visit",
+    "outsideVisitPayEnabled": "Outside visit pay",
     "createWorkplace": "Create Workplace"
   },
   "shifts": {
@@ -100,6 +102,7 @@
     "deleteShift": "Delete this shift?",
     "cannotUndo": "This action cannot be undone.",
     "patientsSeen": "Patients Seen",
+    "outsideVisits": "Outside Visits",
     "deleting": "Deleting..."
   },
   "finance": {
@@ -221,6 +224,8 @@
     "ruleUpdated": "Rule updated",
     "consultationRate": "Consultation Rate",
     "perConsultation": "per consultation",
+    "outsideVisitRate": "Outside Visit Rate",
+    "perOutsideVisit": "per outside visit",
     "presetApplied": "Applied \"{{name}}\" preset"
   },
   "theme": {

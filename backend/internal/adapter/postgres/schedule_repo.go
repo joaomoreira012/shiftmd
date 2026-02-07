@@ -22,11 +22,12 @@ func (r *ScheduleRepository) CreateShift(ctx context.Context, shift *schedule.Sh
 	_, err := r.db.Pool.Exec(ctx, `
 		INSERT INTO shifts (id, user_id, workplace_id, start_time, end_time, timezone, status,
 			recurrence_rule_id, original_start_time, is_recurrence_exception,
-			gcal_event_id, gcal_etag, title, notes, patients_seen, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+			gcal_event_id, gcal_etag, title, notes, patients_seen, outside_visits, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 	`, shift.ID, shift.UserID, shift.WorkplaceID, shift.StartTime, shift.EndTime, shift.Timezone,
 		shift.Status, shift.RecurrenceRuleID, shift.OriginalStartTime, shift.IsRecurrenceException,
-		shift.GCalEventID, shift.GCalEtag, shift.Title, shift.Notes, shift.PatientsSeen, shift.CreatedAt, shift.UpdatedAt)
+		shift.GCalEventID, shift.GCalEtag, shift.Title, shift.Notes, shift.PatientsSeen, shift.OutsideVisits,
+		shift.CreatedAt, shift.UpdatedAt)
 	return err
 }
 
@@ -35,13 +36,15 @@ func (r *ScheduleRepository) GetShiftByID(ctx context.Context, id uuid.UUID) (*s
 	err := r.db.Pool.QueryRow(ctx, `
 		SELECT id, user_id, workplace_id, start_time, end_time, timezone, status,
 			recurrence_rule_id, original_start_time, is_recurrence_exception,
-			gcal_event_id, gcal_etag, last_synced_at, title, notes, patients_seen, created_at, updated_at
+			gcal_event_id, gcal_etag, last_synced_at, title, notes, patients_seen, outside_visits,
+			created_at, updated_at
 		FROM shifts WHERE id = $1
 	`, id).Scan(
 		&shift.ID, &shift.UserID, &shift.WorkplaceID, &shift.StartTime, &shift.EndTime,
 		&shift.Timezone, &shift.Status, &shift.RecurrenceRuleID, &shift.OriginalStartTime,
 		&shift.IsRecurrenceException, &shift.GCalEventID, &shift.GCalEtag, &shift.LastSyncedAt,
-		&shift.Title, &shift.Notes, &shift.PatientsSeen, &shift.CreatedAt, &shift.UpdatedAt,
+		&shift.Title, &shift.Notes, &shift.PatientsSeen, &shift.OutsideVisits,
+		&shift.CreatedAt, &shift.UpdatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, schedule.ErrShiftNotFound
@@ -53,7 +56,8 @@ func (r *ScheduleRepository) ListShifts(ctx context.Context, filter schedule.Shi
 	query := `
 		SELECT id, user_id, workplace_id, start_time, end_time, timezone, status,
 			recurrence_rule_id, original_start_time, is_recurrence_exception,
-			gcal_event_id, gcal_etag, last_synced_at, title, notes, patients_seen, created_at, updated_at
+			gcal_event_id, gcal_etag, last_synced_at, title, notes, patients_seen, outside_visits,
+			created_at, updated_at
 		FROM shifts WHERE user_id = $1 AND start_time >= $2 AND end_time <= $3 AND status != 'cancelled'`
 
 	args := []interface{}{filter.UserID, filter.Start, filter.End}
@@ -80,7 +84,8 @@ func (r *ScheduleRepository) ListShifts(ctx context.Context, filter schedule.Shi
 			&shift.ID, &shift.UserID, &shift.WorkplaceID, &shift.StartTime, &shift.EndTime,
 			&shift.Timezone, &shift.Status, &shift.RecurrenceRuleID, &shift.OriginalStartTime,
 			&shift.IsRecurrenceException, &shift.GCalEventID, &shift.GCalEtag, &shift.LastSyncedAt,
-			&shift.Title, &shift.Notes, &shift.PatientsSeen, &shift.CreatedAt, &shift.UpdatedAt,
+			&shift.Title, &shift.Notes, &shift.PatientsSeen, &shift.OutsideVisits,
+			&shift.CreatedAt, &shift.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -93,12 +98,12 @@ func (r *ScheduleRepository) UpdateShift(ctx context.Context, shift *schedule.Sh
 	_, err := r.db.Pool.Exec(ctx, `
 		UPDATE shifts SET
 			start_time = $2, end_time = $3, status = $4, title = $5, notes = $6,
-			patients_seen = $7, is_recurrence_exception = $8, gcal_event_id = $9, gcal_etag = $10,
-			last_synced_at = $11, updated_at = $12
+			patients_seen = $7, outside_visits = $8, is_recurrence_exception = $9,
+			gcal_event_id = $10, gcal_etag = $11, last_synced_at = $12, updated_at = $13
 		WHERE id = $1
 	`, shift.ID, shift.StartTime, shift.EndTime, shift.Status, shift.Title, shift.Notes,
-		shift.PatientsSeen, shift.IsRecurrenceException, shift.GCalEventID, shift.GCalEtag,
-		shift.LastSyncedAt, shift.UpdatedAt)
+		shift.PatientsSeen, shift.OutsideVisits, shift.IsRecurrenceException,
+		shift.GCalEventID, shift.GCalEtag, shift.LastSyncedAt, shift.UpdatedAt)
 	return err
 }
 

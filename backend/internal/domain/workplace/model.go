@@ -44,6 +44,7 @@ type Workplace struct {
 
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours,omitempty"`
 	HasConsultationPay   bool     `json:"has_consultation_pay"`
+	HasOutsideVisitPay   bool     `json:"has_outside_visit_pay"`
 
 	ContactName  *string `json:"contact_name,omitempty"`
 	ContactPhone *string `json:"contact_phone,omitempty"`
@@ -70,6 +71,7 @@ type PricingRule struct {
 	RateCents              *money.Cents `json:"rate_cents,omitempty"`
 	RateMultiplier         *float64     `json:"rate_multiplier,omitempty"`
 	ConsultationRateCents  *money.Cents `json:"consultation_rate_cents,omitempty"`
+	OutsideVisitRateCents  *money.Cents `json:"outside_visit_rate_cents,omitempty"`
 
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -85,6 +87,7 @@ type CreateWorkplaceInput struct {
 	Currency             string   `json:"currency" validate:"required,len=3"`
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours"`
 	HasConsultationPay   *bool    `json:"has_consultation_pay"`
+	HasOutsideVisitPay   *bool    `json:"has_outside_visit_pay"`
 	ContactName          *string  `json:"contact_name"`
 	ContactPhone         *string  `json:"contact_phone"`
 	ContactEmail         *string  `json:"contact_email"`
@@ -99,6 +102,7 @@ type UpdateWorkplaceInput struct {
 	BaseRateCents        *int64    `json:"base_rate_cents" validate:"omitempty,min=0"`
 	MonthlyExpectedHours *float64  `json:"monthly_expected_hours"`
 	HasConsultationPay   *bool     `json:"has_consultation_pay"`
+	HasOutsideVisitPay   *bool     `json:"has_outside_visit_pay"`
 	ContactName          *string   `json:"contact_name"`
 	ContactPhone         *string   `json:"contact_phone"`
 	ContactEmail         *string   `json:"contact_email"`
@@ -115,6 +119,7 @@ type CreatePricingRuleInput struct {
 	RateCents             *int64      `json:"rate_cents"`
 	RateMultiplier        *float64    `json:"rate_multiplier"`
 	ConsultationRateCents *int64      `json:"consultation_rate_cents"`
+	OutsideVisitRateCents *int64      `json:"outside_visit_rate_cents"`
 }
 
 type UpdatePricingRuleInput struct {
@@ -127,4 +132,5 @@ type UpdatePricingRuleInput struct {
 	RateCents             *int64      `json:"rate_cents"`
 	RateMultiplier        *float64    `json:"rate_multiplier"`
 	ConsultationRateCents *int64      `json:"consultation_rate_cents"`
+	OutsideVisitRateCents *int64      `json:"outside_visit_rate_cents"`
 }

@@ -21,10 +21,12 @@ func NewWorkplaceRepository(db *DB) *WorkplaceRepository {
 func (r *WorkplaceRepository) CreateWorkplace(ctx context.Context, w *workplace.Workplace) error {
 	_, err := r.db.Pool.Exec(ctx, `
 		INSERT INTO workplaces (id, user_id, name, address, color, pay_model, base_rate_cents, currency,
-			monthly_expected_hours, has_consultation_pay, contact_name, contact_phone, contact_email, notes, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+			monthly_expected_hours, has_consultation_pay, has_outside_visit_pay,
+			contact_name, contact_phone, contact_email, notes, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 	`, w.ID, w.UserID, w.Name, w.Address, w.Color, w.PayModel, int64(w.BaseRateCents), w.Currency,
-		w.MonthlyExpectedHours, w.HasConsultationPay, w.ContactName, w.ContactPhone, w.ContactEmail, w.Notes,
+		w.MonthlyExpectedHours, w.HasConsultationPay, w.HasOutsideVisitPay,
+		w.ContactName, w.ContactPhone, w.ContactEmail, w.Notes,
 		w.IsActive, w.CreatedAt, w.UpdatedAt)
 	return err
 }
@@ -34,12 +36,14 @@ func (r *WorkplaceRepository) GetWorkplaceByID(ctx context.Context, id uuid.UUID
 	var baseRateCents int64
 	err := r.db.Pool.QueryRow(ctx, `
 		SELECT id, user_id, name, address, color, pay_model, base_rate_cents, currency,
-			monthly_expected_hours, has_consultation_pay, contact_name, contact_phone, contact_email, notes,
+			monthly_expected_hours, has_consultation_pay, has_outside_visit_pay,
+			contact_name, contact_phone, contact_email, notes,
 			is_active, created_at, updated_at
 		FROM workplaces WHERE id = $1
 	`, id).Scan(
 		&w.ID, &w.UserID, &w.Name, &w.Address, &w.Color, &w.PayModel, &baseRateCents, &w.Currency,
-		&w.MonthlyExpectedHours, &w.HasConsultationPay, &w.ContactName, &w.ContactPhone, &w.ContactEmail, &w.Notes,
+		&w.MonthlyExpectedHours, &w.HasConsultationPay, &w.HasOutsideVisitPay,
+		&w.ContactName, &w.ContactPhone, &w.ContactEmail, &w.Notes,
 		&w.IsActive, &w.CreatedAt, &w.UpdatedAt,
 	)
 	w.BaseRateCents = money.Cents(baseRateCents)
@@ -52,7 +56,8 @@ func (r *WorkplaceRepository) GetWorkplaceByID(ctx context.Context, id uuid.UUID
 func (r *WorkplaceRepository) ListWorkplacesByUser(ctx context.Context, userID uuid.UUID, activeOnly bool) ([]*workplace.Workplace, error) {
 	query := `
 		SELECT id, user_id, name, address, color, pay_model, base_rate_cents, currency,
-			monthly_expected_hours, has_consultation_pay, contact_name, contact_phone, contact_email, notes,
+			monthly_expected_hours, has_consultation_pay, has_outside_visit_pay,
+			contact_name, contact_phone, contact_email, notes,
 			is_active, created_at, updated_at
 		FROM workplaces WHERE user_id = $1`
 	if activeOnly {
@@ -72,7 +77,8 @@ func (r *WorkplaceRepository) ListWorkplacesByUser(ctx context.Context, userID u
 		var baseRateCents int64
 		if err := rows.Scan(
 			&w.ID, &w.UserID, &w.Name, &w.Address, &w.Color, &w.PayModel, &baseRateCents, &w.Currency,
-			&w.MonthlyExpectedHours, &w.HasConsultationPay, &w.ContactName, &w.ContactPhone, &w.ContactEmail, &w.Notes,
+			&w.MonthlyExpectedHours, &w.HasConsultationPay, &w.HasOutsideVisitPay,
+			&w.ContactName, &w.ContactPhone, &w.ContactEmail, &w.Notes,
 			&w.IsActive, &w.CreatedAt, &w.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -87,11 +93,12 @@ func (r *WorkplaceRepository) UpdateWorkplace(ctx context.Context, w *workplace.
 	_, err := r.db.Pool.Exec(ctx, `
 		UPDATE workplaces SET
 			name = $2, address = $3, color = $4, pay_model = $5, base_rate_cents = $6,
-			monthly_expected_hours = $7, has_consultation_pay = $8, contact_name = $9, contact_phone = $10,
-			contact_email = $11, notes = $12, updated_at = $13
+			monthly_expected_hours = $7, has_consultation_pay = $8, has_outside_visit_pay = $9,
+			contact_name = $10, contact_phone = $11, contact_email = $12, notes = $13, updated_at = $14
 		WHERE id = $1
 	`, w.ID, w.Name, w.Address, w.Color, w.PayModel, int64(w.BaseRateCents),
-		w.MonthlyExpectedHours, w.HasConsultationPay, w.ContactName, w.ContactPhone, w.ContactEmail, w.Notes, w.UpdatedAt)
+		w.MonthlyExpectedHours, w.HasConsultationPay, w.HasOutsideVisitPay,
+		w.ContactName, w.ContactPhone, w.ContactEmail, w.Notes, w.UpdatedAt)
 	return err
 }
 
@@ -111,12 +118,19 @@ func (r *WorkplaceRepository) CreatePricingRule(ctx context.Context, rule *workp
 		v := int64(*rule.ConsultationRateCents)
 		consultationRateCents = &v
 	}
+	var outsideVisitRateCents *int64
+	if rule.OutsideVisitRateCents != nil {
+		v := int64(*rule.OutsideVisitRateCents)
+		outsideVisitRateCents = &v
+	}
 	_, err := r.db.Pool.Exec(ctx, `
 		INSERT INTO pricing_rules (id, workplace_id, name, priority, time_start, time_end,
-			days_of_week, specific_dates, rate_cents, rate_multiplier, consultation_rate_cents, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+			days_of_week, specific_dates, rate_cents, rate_multiplier,
+			consultation_rate_cents, outside_visit_rate_cents, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	`, rule.ID, rule.WorkplaceID, rule.Name, rule.Priority, rule.TimeStart, rule.TimeEnd,
-		rule.DaysOfWeek, rule.SpecificDates, rateCents, rule.RateMultiplier, consultationRateCents,
+		rule.DaysOfWeek, rule.SpecificDates, rateCents, rule.RateMultiplier,
+		consultationRateCents, outsideVisitRateCents,
 		rule.IsActive, rule.CreatedAt, rule.UpdatedAt)
 	return err
 }
@@ -125,14 +139,17 @@ func (r *WorkplaceRepository) GetPricingRuleByID(ctx context.Context, id uuid.UU
 	rule := &workplace.PricingRule{}
 	var rateCents *int64
 	var consultationRateCents *int64
+	var outsideVisitRateCents *int64
 	err := r.db.Pool.QueryRow(ctx, `
 		SELECT id, workplace_id, name, priority, time_start, time_end,
-			days_of_week, specific_dates, rate_cents, rate_multiplier, consultation_rate_cents,
+			days_of_week, specific_dates, rate_cents, rate_multiplier,
+			consultation_rate_cents, outside_visit_rate_cents,
 			is_active, created_at, updated_at
 		FROM pricing_rules WHERE id = $1
 	`, id).Scan(
 		&rule.ID, &rule.WorkplaceID, &rule.Name, &rule.Priority, &rule.TimeStart, &rule.TimeEnd,
-		&rule.DaysOfWeek, &rule.SpecificDates, &rateCents, &rule.RateMultiplier, &consultationRateCents,
+		&rule.DaysOfWeek, &rule.SpecificDates, &rateCents, &rule.RateMultiplier,
+		&consultationRateCents, &outsideVisitRateCents,
 		&rule.IsActive, &rule.CreatedAt, &rule.UpdatedAt,
 	)
 	if rateCents != nil {
@@ -143,6 +160,10 @@ func (r *WorkplaceRepository) GetPricingRuleByID(ctx context.Context, id uuid.UU
 		c := money.Cents(*consultationRateCents)
 		rule.ConsultationRateCents = &c
 	}
+	if outsideVisitRateCents != nil {
+		c := money.Cents(*outsideVisitRateCents)
+		rule.OutsideVisitRateCents = &c
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, workplace.ErrPricingRuleNotFound
 	}
@@ -152,7 +173,8 @@ func (r *WorkplaceRepository) GetPricingRuleByID(ctx context.Context, id uuid.UU
 func (r *WorkplaceRepository) ListPricingRules(ctx context.Context, workplaceID uuid.UUID, activeOnly bool) ([]*workplace.PricingRule, error) {
 	query := `
 		SELECT id, workplace_id, name, priority, time_start, time_end,
-			days_of_week, specific_dates, rate_cents, rate_multiplier, consultation_rate_cents,
+			days_of_week, specific_dates, rate_cents, rate_multiplier,
+			consultation_rate_cents, outside_visit_rate_cents,
 			is_active, created_at, updated_at
 		FROM pricing_rules WHERE workplace_id = $1`
 	if activeOnly {
@@ -171,9 +193,11 @@ func (r *WorkplaceRepository) ListPricingRules(ctx context.Context, workplaceID 
 		rule := &workplace.PricingRule{}
 		var rateCents *int64
 		var consultationRateCents *int64
+		var outsideVisitRateCents *int64
 		if err := rows.Scan(
 			&rule.ID, &rule.WorkplaceID, &rule.Name, &rule.Priority, &rule.TimeStart, &rule.TimeEnd,
-			&rule.DaysOfWeek, &rule.SpecificDates, &rateCents, &rule.RateMultiplier, &consultationRateCents,
+			&rule.DaysOfWeek, &rule.SpecificDates, &rateCents, &rule.RateMultiplier,
+			&consultationRateCents, &outsideVisitRateCents,
 			&rule.IsActive, &rule.CreatedAt, &rule.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -185,6 +209,10 @@ func (r *WorkplaceRepository) ListPricingRules(ctx context.Context, workplaceID 
 		if consultationRateCents != nil {
 			c := money.Cents(*consultationRateCents)
 			rule.ConsultationRateCents = &c
+		}
+		if outsideVisitRateCents != nil {
+			c := money.Cents(*outsideVisitRateCents)
+			rule.OutsideVisitRateCents = &c
 		}
 		rules = append(rules, rule)
 	}
@@ -202,14 +230,21 @@ func (r *WorkplaceRepository) UpdatePricingRule(ctx context.Context, rule *workp
 		v := int64(*rule.ConsultationRateCents)
 		consultationRateCents = &v
 	}
+	var outsideVisitRateCents *int64
+	if rule.OutsideVisitRateCents != nil {
+		v := int64(*rule.OutsideVisitRateCents)
+		outsideVisitRateCents = &v
+	}
 	_, err := r.db.Pool.Exec(ctx, `
 		UPDATE pricing_rules SET
 			name = $2, priority = $3, time_start = $4, time_end = $5,
 			days_of_week = $6, specific_dates = $7, rate_cents = $8,
-			rate_multiplier = $9, consultation_rate_cents = $10, updated_at = $11
+			rate_multiplier = $9, consultation_rate_cents = $10,
+			outside_visit_rate_cents = $11, updated_at = $12
 		WHERE id = $1
 	`, rule.ID, rule.Name, rule.Priority, rule.TimeStart, rule.TimeEnd,
-		rule.DaysOfWeek, rule.SpecificDates, rateCents, rule.RateMultiplier, consultationRateCents, rule.UpdatedAt)
+		rule.DaysOfWeek, rule.SpecificDates, rateCents, rule.RateMultiplier,
+		consultationRateCents, outsideVisitRateCents, rule.UpdatedAt)
 	return err
 }
 

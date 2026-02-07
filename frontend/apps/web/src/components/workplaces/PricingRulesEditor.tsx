@@ -13,9 +13,10 @@ interface Props {
   workplaceId: string;
   baseRateCents: number;
   hasConsultationPay?: boolean;
+  hasOutsideVisitPay?: boolean;
 }
 
-export function PricingRulesEditor({ workplaceId, baseRateCents, hasConsultationPay }: Props) {
+export function PricingRulesEditor({ workplaceId, baseRateCents, hasConsultationPay, hasOutsideVisitPay }: Props) {
   const { t } = useTranslation();
   const { data: rules, isLoading } = usePricingRules(workplaceId);
   const createMutation = useCreatePricingRule();
@@ -46,6 +47,7 @@ export function PricingRulesEditor({ workplaceId, baseRateCents, hasConsultation
                 rule={rule}
                 baseRateCents={baseRateCents}
                 hasConsultationPay={hasConsultationPay}
+                hasOutsideVisitPay={hasOutsideVisitPay}
                 onEdit={() => setEditingRule(rule)}
                 onDelete={() => deleteMutation.mutate({ workplaceId, ruleId: rule.id })}
                 isDeleting={deleteMutation.isPending}
@@ -73,6 +75,7 @@ export function PricingRulesEditor({ workplaceId, baseRateCents, hasConsultation
           nextPriority={rules ? Math.max(0, ...rules.map(r => r.priority)) + 1 : 1}
           baseRateCents={baseRateCents}
           hasConsultationPay={hasConsultationPay}
+          hasOutsideVisitPay={hasOutsideVisitPay}
           onClose={() => { setShowAddForm(false); setEditingRule(null); }}
         />
       )}
@@ -84,6 +87,7 @@ function RuleCard({
   rule,
   baseRateCents,
   hasConsultationPay,
+  hasOutsideVisitPay,
   onEdit,
   onDelete,
   isDeleting,
@@ -91,6 +95,7 @@ function RuleCard({
   rule: PricingRule;
   baseRateCents: number;
   hasConsultationPay?: boolean;
+  hasOutsideVisitPay?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting: boolean;
@@ -124,6 +129,11 @@ function RuleCard({
             +{formatEuros(rule.consultation_rate_cents)} {t('pricing.perConsultation')}
           </p>
         )}
+        {hasOutsideVisitPay && rule.outside_visit_rate_cents != null && (
+          <p className="text-xs text-green-600 dark:text-green-400">
+            +{formatEuros(rule.outside_visit_rate_cents)} {t('pricing.perOutsideVisit')}
+          </p>
+        )}
       </div>
       <div className="flex gap-1">
         <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-gray-600 text-xs">{t('common.edit')}</button>
@@ -139,6 +149,7 @@ function RuleFormModal({
   nextPriority,
   baseRateCents,
   hasConsultationPay,
+  hasOutsideVisitPay,
   onClose,
 }: {
   workplaceId: string;
@@ -146,6 +157,7 @@ function RuleFormModal({
   nextPriority: number;
   baseRateCents: number;
   hasConsultationPay?: boolean;
+  hasOutsideVisitPay?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -176,6 +188,7 @@ function RuleFormModal({
           rate_cents: existingRule.rate_cents,
           rate_multiplier: existingRule.rate_multiplier,
           consultation_rate_cents: existingRule.consultation_rate_cents,
+          outside_visit_rate_cents: existingRule.outside_visit_rate_cents,
         }
       : {
           name: '',
@@ -372,6 +385,28 @@ function RuleFormModal({
                 />
               </div>
               <p className="text-xs text-gray-400 mt-1">{t('pricing.perConsultation')}</p>
+            </div>
+          )}
+
+          {/* Outside Visit Rate (optional, only when workplace has outside visit pay) */}
+          {hasOutsideVisitPay && (
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('pricing.outsideVisitRate')}</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">EUR</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="w-full pl-12 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                  value={centsToEuros(watch('outside_visit_rate_cents') ?? 0)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setValue('outside_visit_rate_cents', val ? eurosToCents(val) : undefined);
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{t('pricing.perOutsideVisit')}</p>
             </div>
           )}
 

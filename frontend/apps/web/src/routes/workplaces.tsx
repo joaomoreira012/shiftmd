@@ -75,6 +75,11 @@ export function WorkplacesPage() {
                     {t('workplaces.consultationPayEnabled')}
                   </span>
                 )}
+                {wp.has_outside_visit_pay && (
+                  <span className="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 rounded-full text-green-600 dark:text-green-300">
+                    {t('workplaces.outsideVisitPayEnabled')}
+                  </span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>{payModelLabel(wp.pay_model)}</span>

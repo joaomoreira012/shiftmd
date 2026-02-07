@@ -29,6 +29,10 @@ func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input C
 	if input.HasConsultationPay != nil {
 		hasConsultationPay = *input.HasConsultationPay
 	}
+	hasOutsideVisitPay := false
+	if input.HasOutsideVisitPay != nil {
+		hasOutsideVisitPay = *input.HasOutsideVisitPay
+	}
 
 	w := &Workplace{
 		ID:                   uuid.New(),
@@ -41,6 +45,7 @@ func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input C
 		Currency:             input.Currency,
 		MonthlyExpectedHours: input.MonthlyExpectedHours,
 		HasConsultationPay:   hasConsultationPay,
+		HasOutsideVisitPay:   hasOutsideVisitPay,
 		ContactName:          input.ContactName,
 		ContactPhone:         input.ContactPhone,
 		ContactEmail:         input.ContactEmail,
@@ -95,6 +100,9 @@ func (s *Service) UpdateWorkplace(ctx context.Context, id uuid.UUID, input Updat
 	if input.HasConsultationPay != nil {
 		w.HasConsultationPay = *input.HasConsultationPay
 	}
+	if input.HasOutsideVisitPay != nil {
+		w.HasOutsideVisitPay = *input.HasOutsideVisitPay
+	}
 	if input.ContactName != nil {
 		w.ContactName = input.ContactName
 	}
@@ -137,6 +145,11 @@ func (s *Service) CreatePricingRule(ctx context.Context, workplaceID uuid.UUID, 
 		c := money.Cents(*input.ConsultationRateCents)
 		consultationRateCents = &c
 	}
+	var outsideVisitRateCents *money.Cents
+	if input.OutsideVisitRateCents != nil {
+		c := money.Cents(*input.OutsideVisitRateCents)
+		outsideVisitRateCents = &c
+	}
 
 	rule := &PricingRule{
 		ID:                    uuid.New(),
@@ -150,6 +163,7 @@ func (s *Service) CreatePricingRule(ctx context.Context, workplaceID uuid.UUID, 
 		RateCents:             rateCents,
 		RateMultiplier:        input.RateMultiplier,
 		ConsultationRateCents: consultationRateCents,
+		OutsideVisitRateCents: outsideVisitRateCents,
 		IsActive:              true,
 		CreatedAt:             time.Now(),
 		UpdatedAt:             time.Now(),
@@ -201,6 +215,10 @@ func (s *Service) UpdatePricingRule(ctx context.Context, id uuid.UUID, input Upd
 	if input.ConsultationRateCents != nil {
 		c := money.Cents(*input.ConsultationRateCents)
 		rule.ConsultationRateCents = &c
+	}
+	if input.OutsideVisitRateCents != nil {
+		c := money.Cents(*input.OutsideVisitRateCents)
+		rule.OutsideVisitRateCents = &c
 	}
 
 	rule.UpdatedAt = time.Now()

@@ -21,7 +21,8 @@ type EarningSegment struct {
 // It splits the shift at pricing rule boundaries and midnight crossings, then evaluates
 // each segment against the priority-ordered rules.
 // patientsSeen is used for consultation pay add-on when wp.HasConsultationPay is true.
-func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules []*PricingRule, patientsSeen int) []EarningSegment {
+// outsideVisits is used for outside visit pay add-on when wp.HasOutsideVisitPay is true.
+func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules []*PricingRule, patientsSeen int, outsideVisits int) []EarningSegment {
 	// Sort rules by priority (lower number = higher priority)
 	sortedRules := make([]*PricingRule, len(rules))
 	copy(sortedRules, rules)
@@ -33,6 +34,15 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 	segments := splitIntoSegments(shiftStart, shiftEnd, sortedRules)
 
 	totalHours := shiftEnd.Sub(shiftStart).Hours()
+
+	// Resolve outside visit rate once for the entire shift (flat, not time-dependent)
+	var outsideVisitTotal money.Cents
+	if wp.HasOutsideVisitPay && outsideVisits > 0 {
+		outsideVisitRate := resolveOutsideVisitRateForShift(sortedRules)
+		if outsideVisitRate > 0 {
+			outsideVisitTotal = money.Cents(int64(outsideVisitRate) * int64(outsideVisits))
+		}
+	}
 
 	var earnings []EarningSegment
 	for _, seg := range segments {
@@ -64,6 +74,11 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 			}
 		}
 
+		// Add outside visit pay if enabled (flat total distributed proportionally)
+		if outsideVisitTotal > 0 && totalHours > 0 {
+			amount += money.Cents(float64(outsideVisitTotal) * hours / totalHours)
+		}
+
 		earnings = append(earnings, EarningSegment{
 			Start:    seg.Start,
 			End:      seg.End,
@@ -81,6 +96,20 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 func resolveConsultationRate(rule *PricingRule) money.Cents {
 	if rule != nil && rule.ConsultationRateCents != nil {
 		return *rule.ConsultationRateCents
+	}
+	return 0
+}
+
+// resolveOutsideVisitRateForShift picks the outside visit rate from the first active rule
+// (highest priority) that has it set. Returns 0 if no rule defines it.
+func resolveOutsideVisitRateForShift(rules []*PricingRule) money.Cents {
+	for _, rule := range rules {
+		if !rule.IsActive {
+			continue
+		}
+		if rule.OutsideVisitRateCents != nil {
+			return *rule.OutsideVisitRateCents
+		}
 	}
 	return 0
 }

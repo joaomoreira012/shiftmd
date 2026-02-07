@@ -13,6 +13,7 @@ export interface Workplace {
   currency: string;
   monthly_expected_hours?: number;
   has_consultation_pay: boolean;
+  has_outside_visit_pay: boolean;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -34,6 +35,7 @@ export interface PricingRule {
   rate_cents?: number;
   rate_multiplier?: number;
   consultation_rate_cents?: number;
+  outside_visit_rate_cents?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -48,6 +50,7 @@ export interface CreateWorkplaceInput {
   currency: string;
   monthly_expected_hours?: number;
   has_consultation_pay?: boolean;
+  has_outside_visit_pay?: boolean;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -62,6 +65,7 @@ export interface UpdateWorkplaceInput {
   base_rate_cents?: number;
   monthly_expected_hours?: number;
   has_consultation_pay?: boolean;
+  has_outside_visit_pay?: boolean;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -78,4 +82,5 @@ export interface CreatePricingRuleInput {
   rate_cents?: number;
   rate_multiplier?: number;
   consultation_rate_cents?: number;
+  outside_visit_rate_cents?: number;
 }

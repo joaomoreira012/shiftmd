@@ -71,6 +71,8 @@
     "perMonthShort": "por mes",
     "hasConsultationPay": "Tambem paga por consulta",
     "consultationPayEnabled": "Pagamento por consulta",
+    "hasOutsideVisitPay": "Tambem paga por visita domiciliaria",
+    "outsideVisitPayEnabled": "Pagamento por visita",
     "createWorkplace": "Criar Local"
   },
   "shifts": {
@@ -100,6 +102,7 @@
     "deleteShift": "Eliminar este turno?",
     "cannotUndo": "Esta acao nao pode ser desfeita.",
     "patientsSeen": "Doentes Atendidos",
+    "outsideVisits": "Visitas Domiciliarias",
     "deleting": "A eliminar..."
   },
   "finance": {
@@ -221,6 +224,8 @@
     "ruleUpdated": "Regra atualizada",
     "consultationRate": "Taxa por Consulta",
     "perConsultation": "por consulta",
+    "outsideVisitRate": "Taxa por Visita",
+    "perOutsideVisit": "por visita domiciliaria",
     "presetApplied": "Predefinicao \"{{name}}\" aplicada"
   },
   "theme": {

@@ -42,10 +42,11 @@ func (s *Service) CreateShift(ctx context.Context, userID uuid.UUID, input Creat
 		EndTime:      input.EndTime,
 		Timezone:     tz,
 		Status:       ShiftStatusScheduled,
-		Title:        input.Title,
-		Notes:        input.Notes,
-		PatientsSeen: input.PatientsSeen,
-		CreatedAt:    time.Now(),
+		Title:         input.Title,
+		Notes:         input.Notes,
+		PatientsSeen:  input.PatientsSeen,
+		OutsideVisits: input.OutsideVisits,
+		CreatedAt:     time.Now(),
 		UpdatedAt:    time.Now(),
 	}
 
@@ -114,6 +115,9 @@ func (s *Service) UpdateShift(ctx context.Context, id uuid.UUID, input UpdateShi
 	if input.PatientsSeen != nil {
 		shift.PatientsSeen = input.PatientsSeen
 	}
+	if input.OutsideVisits != nil {
+		shift.OutsideVisits = input.OutsideVisits
+	}
 
 	if !shift.EndTime.After(shift.StartTime) {
 		return nil, ErrInvalidTimeRange
@@ -125,8 +129,8 @@ func (s *Service) UpdateShift(ctx context.Context, id uuid.UUID, input UpdateShi
 		return nil, err
 	}
 
-	// Recalculate earnings if time or patients changed
-	if input.StartTime != nil || input.EndTime != nil || input.PatientsSeen != nil {
+	// Recalculate earnings if time, patients, or outside visits changed
+	if input.StartTime != nil || input.EndTime != nil || input.PatientsSeen != nil || input.OutsideVisits != nil {
 		if err := s.calculateAndStoreEarnings(ctx, shift); err != nil {
 			return nil, err
 		}
@@ -158,7 +162,11 @@ func (s *Service) calculateAndStoreEarnings(ctx context.Context, shift *Shift) e
 	if shift.PatientsSeen != nil {
 		patientsSeen = *shift.PatientsSeen
 	}
-	segments := workplace.ResolveShiftEarnings(shift.StartTime, shift.EndTime, wp, rules, patientsSeen)
+	outsideVisits := 0
+	if shift.OutsideVisits != nil {
+		outsideVisits = *shift.OutsideVisits
+	}
+	segments := workplace.ResolveShiftEarnings(shift.StartTime, shift.EndTime, wp, rules, patientsSeen, outsideVisits)
 
 	var shiftEarnings []*ShiftEarning
 	for _, seg := range segments {

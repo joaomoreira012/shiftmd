@@ -26,6 +26,7 @@ export interface Shift {
   title?: string;
   notes?: string;
   patients_seen?: number;
+  outside_visits?: number;
   created_at: string;
   updated_at: string;
   workplace?: Workplace;
@@ -41,6 +42,7 @@ export interface CreateShiftInput {
   title?: string;
   notes?: string;
   patients_seen?: number;
+  outside_visits?: number;
   recurrence?: {
     rrule_string: string;
     until_date?: string;
@@ -55,6 +57,7 @@ export interface UpdateShiftInput {
   title?: string;
   notes?: string;
   patients_seen?: number;
+  outside_visits?: number;
 }
 
 export interface ShiftFilter {
