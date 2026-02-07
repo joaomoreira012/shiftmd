@@ -1,0 +1,4 @@
+
+> @doctor-tracker/mobile@0.0.1 typecheck /Users/joao.moreira/Documents/pessoal/shiftmd/frontend/apps/mobile
+> tsc --noEmit
+

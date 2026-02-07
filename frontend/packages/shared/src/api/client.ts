@@ -8,6 +8,8 @@ export interface TokenProvider {
 }
 
 export function createApiClient(baseUrl: string, tokenProvider: TokenProvider): KyInstance {
+  const resolvedBaseUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+
   return ky.create({
     prefixUrl: baseUrl,
     hooks: {
@@ -29,7 +31,7 @@ export function createApiClient(baseUrl: string, tokenProvider: TokenProvider): 
             }
 
             try {
-              const refreshResponse = await ky.post('/api/v1/auth/refresh', {
+              const refreshResponse = await ky.post(`${resolvedBaseUrl}api/v1/auth/refresh`, {
                 json: { refresh_token: refreshToken },
               }).json<{ data: { access_token: string; refresh_token: string } }>();
 

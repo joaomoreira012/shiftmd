@@ -41,3 +41,10 @@ frontend/packages/shared/.turbo/
 
 # Test coverage
 coverage/
+
+# Expo / React Native
+.expo/
+frontend/apps/mobile/android/
+frontend/apps/mobile/ios/
+*.apk
+*.aab
