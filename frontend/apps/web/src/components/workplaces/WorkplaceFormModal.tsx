@@ -181,7 +181,8 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                {...register('has_consultation_pay')}
+                checked={watch('has_consultation_pay')}
+                onChange={(e) => setValue('has_consultation_pay', e.target.checked, { shouldDirty: true })}
                 className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm font-medium">{t('workplaces.hasConsultationPay')}</span>
