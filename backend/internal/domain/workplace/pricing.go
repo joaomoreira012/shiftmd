@@ -59,8 +59,9 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 				amount = money.Cents(float64(rate) * hours / totalHours)
 			}
 		case PayModelMonthly:
-			if wp.MonthlyExpectedHours != nil && *wp.MonthlyExpectedHours > 0 {
-				amount = money.Cents(float64(rate) / *wp.MonthlyExpectedHours * hours)
+			// Fixed monthly pay: full base rate per shift, distributed across segments
+			if totalHours > 0 {
+				amount = money.Cents(float64(rate) * hours / totalHours)
 			}
 		}
 

@@ -51,7 +51,7 @@
     "baseRate": "Base Rate (EUR)",
     "perHour": "Per hour rate. Override with pricing rules for specific times.",
     "perTurn": "Fixed amount per shift/turn. Override with pricing rules for different times.",
-    "monthly": "Total monthly salary.",
+    "monthly": "Fixed monthly salary, regardless of hours worked.",
     "expectedHours": "Expected Monthly Hours",
     "contactName": "Contact Name",
     "contactPhone": "Contact Phone",

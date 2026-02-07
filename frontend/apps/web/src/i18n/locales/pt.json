@@ -51,7 +51,7 @@
     "baseRate": "Taxa Base (EUR)",
     "perHour": "Taxa por hora. Pode definir regras de preco para horarios especificos.",
     "perTurn": "Valor fixo por turno. Pode definir regras de preco para horarios especificos.",
-    "monthly": "Salario mensal total.",
+    "monthly": "Salario mensal fixo, independentemente das horas trabalhadas.",
     "expectedHours": "Horas Mensais Esperadas",
     "contactName": "Nome do Contacto",
     "contactPhone": "Telefone do Contacto",

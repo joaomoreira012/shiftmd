@@ -3,7 +3,7 @@ import type { PayModel, DayOfWeek } from '../types/workplace';
 export const PAY_MODEL_OPTIONS: { value: PayModel; label: string; description: string }[] = [
   { value: 'hourly', label: 'Hourly', description: 'Paid per hour worked. Rate can vary by time of day and day of week.' },
   { value: 'per_turn', label: 'Per Turn', description: 'Fixed amount per shift/turn. Rate can vary by time of day and day of week.' },
-  { value: 'monthly', label: 'Monthly', description: 'Fixed monthly salary, prorated based on expected hours.' },
+  { value: 'monthly', label: 'Monthly', description: 'Fixed monthly salary, regardless of hours worked.' },
 ];
 
 export const DAYS_OF_WEEK: { value: DayOfWeek; label: string; short: string }[] = [
