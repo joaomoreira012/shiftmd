@@ -20,7 +20,8 @@ type EarningSegment struct {
 // ResolveShiftEarnings calculates earnings for a shift based on the workplace's pricing rules.
 // It splits the shift at pricing rule boundaries and midnight crossings, then evaluates
 // each segment against the priority-ordered rules.
-func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules []*PricingRule) []EarningSegment {
+// patientsSeen is used for consultation pay add-on when wp.HasConsultationPay is true.
+func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules []*PricingRule, patientsSeen int) []EarningSegment {
 	// Sort rules by priority (lower number = higher priority)
 	sortedRules := make([]*PricingRule, len(rules))
 	copy(sortedRules, rules)
@@ -31,9 +32,11 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 	// Split the shift into segments at rule boundaries and midnight crossings
 	segments := splitIntoSegments(shiftStart, shiftEnd, sortedRules)
 
+	totalHours := shiftEnd.Sub(shiftStart).Hours()
+
 	var earnings []EarningSegment
 	for _, seg := range segments {
-		rate, ruleName := resolveRate(seg.Start, wp, sortedRules)
+		rate, ruleName, matchedRule := resolveRateWithRule(seg.Start, wp, sortedRules)
 		hours := seg.End.Sub(seg.Start).Hours()
 
 		var amount money.Cents
@@ -42,13 +45,22 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 			amount = money.Cents(float64(rate) * hours)
 		case PayModelPerTurn:
 			// For per-turn, distribute the rate proportionally across segments
-			totalHours := shiftEnd.Sub(shiftStart).Hours()
 			if totalHours > 0 {
 				amount = money.Cents(float64(rate) * hours / totalHours)
 			}
 		case PayModelMonthly:
 			if wp.MonthlyExpectedHours != nil && *wp.MonthlyExpectedHours > 0 {
 				amount = money.Cents(float64(rate) / *wp.MonthlyExpectedHours * hours)
+			}
+		}
+
+		// Add consultation pay if enabled
+		if wp.HasConsultationPay && patientsSeen > 0 && totalHours > 0 {
+			consultRate := resolveConsultationRate(matchedRule)
+			if consultRate > 0 {
+				// Distribute consultation earnings proportionally across segments
+				consultAmount := money.Cents(float64(consultRate) * float64(patientsSeen) * hours / totalHours)
+				amount += consultAmount
 			}
 		}
 
@@ -63,6 +75,14 @@ func ResolveShiftEarnings(shiftStart, shiftEnd time.Time, wp *Workplace, rules [
 	}
 
 	return earnings
+}
+
+// resolveConsultationRate returns the consultation rate from a matched pricing rule, or 0 if not set.
+func resolveConsultationRate(rule *PricingRule) money.Cents {
+	if rule != nil && rule.ConsultationRateCents != nil {
+		return *rule.ConsultationRateCents
+	}
+	return 0
 }
 
 // TotalEarnings sums up all earning segments.
@@ -149,20 +169,26 @@ func splitByRuleBoundaries(start, end time.Time, rules []*PricingRule) []timeSeg
 
 // resolveRate finds the applicable rate for a given point in time.
 func resolveRate(t time.Time, wp *Workplace, rules []*PricingRule) (money.Cents, string) {
+	rate, name, _ := resolveRateWithRule(t, wp, rules)
+	return rate, name
+}
+
+// resolveRateWithRule finds the applicable rate and the matched rule for a given point in time.
+func resolveRateWithRule(t time.Time, wp *Workplace, rules []*PricingRule) (money.Cents, string, *PricingRule) {
 	for _, rule := range rules {
 		if !rule.IsActive {
 			continue
 		}
 		if ruleMatchesTime(rule, t) {
 			if rule.RateMultiplier != nil {
-				return money.Cents(float64(wp.BaseRateCents) * *rule.RateMultiplier), rule.Name
+				return money.Cents(float64(wp.BaseRateCents) * *rule.RateMultiplier), rule.Name, rule
 			}
 			if rule.RateCents != nil {
-				return *rule.RateCents, rule.Name
+				return *rule.RateCents, rule.Name, rule
 			}
 		}
 	}
-	return wp.BaseRateCents, "base"
+	return wp.BaseRateCents, "base", nil
 }
 
 // ruleMatchesTime checks whether a pricing rule applies at a given time.

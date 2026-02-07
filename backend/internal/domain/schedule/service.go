@@ -35,17 +35,18 @@ func (s *Service) CreateShift(ctx context.Context, userID uuid.UUID, input Creat
 	}
 
 	shift := &Shift{
-		ID:          uuid.New(),
-		UserID:      userID,
-		WorkplaceID: input.WorkplaceID,
-		StartTime:   input.StartTime,
-		EndTime:     input.EndTime,
-		Timezone:    tz,
-		Status:      ShiftStatusScheduled,
-		Title:       input.Title,
-		Notes:       input.Notes,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:           uuid.New(),
+		UserID:       userID,
+		WorkplaceID:  input.WorkplaceID,
+		StartTime:    input.StartTime,
+		EndTime:      input.EndTime,
+		Timezone:     tz,
+		Status:       ShiftStatusScheduled,
+		Title:        input.Title,
+		Notes:        input.Notes,
+		PatientsSeen: input.PatientsSeen,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if err := s.repo.CreateShift(ctx, shift); err != nil {
@@ -110,6 +111,9 @@ func (s *Service) UpdateShift(ctx context.Context, id uuid.UUID, input UpdateShi
 	if input.Notes != nil {
 		shift.Notes = input.Notes
 	}
+	if input.PatientsSeen != nil {
+		shift.PatientsSeen = input.PatientsSeen
+	}
 
 	if !shift.EndTime.After(shift.StartTime) {
 		return nil, ErrInvalidTimeRange
@@ -121,8 +125,8 @@ func (s *Service) UpdateShift(ctx context.Context, id uuid.UUID, input UpdateShi
 		return nil, err
 	}
 
-	// Recalculate earnings if time changed
-	if input.StartTime != nil || input.EndTime != nil {
+	// Recalculate earnings if time or patients changed
+	if input.StartTime != nil || input.EndTime != nil || input.PatientsSeen != nil {
 		if err := s.calculateAndStoreEarnings(ctx, shift); err != nil {
 			return nil, err
 		}
@@ -150,7 +154,11 @@ func (s *Service) calculateAndStoreEarnings(ctx context.Context, shift *Shift) e
 	_ = s.repo.DeleteShiftEarnings(ctx, shift.ID)
 
 	// Calculate new earnings
-	segments := workplace.ResolveShiftEarnings(shift.StartTime, shift.EndTime, wp, rules)
+	patientsSeen := 0
+	if shift.PatientsSeen != nil {
+		patientsSeen = *shift.PatientsSeen
+	}
+	segments := workplace.ResolveShiftEarnings(shift.StartTime, shift.EndTime, wp, rules, patientsSeen)
 
 	var shiftEarnings []*ShiftEarning
 	for _, seg := range segments {

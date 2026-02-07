@@ -11,6 +11,7 @@ export const createPricingRuleSchema = z.object({
   specific_dates: z.array(z.string().regex(/^\d{4}-\d{2}-\d{2}$/)).optional(),
   rate_cents: z.number().int().min(0).optional(),
   rate_multiplier: z.number().positive().optional(),
+  consultation_rate_cents: z.number().int().min(0).optional(),
 }).refine(
   (data) => (data.rate_cents !== undefined) !== (data.rate_multiplier !== undefined),
   { message: 'Must set either rate_cents or rate_multiplier, not both' }

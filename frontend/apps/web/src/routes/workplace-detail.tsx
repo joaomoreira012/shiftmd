@@ -78,6 +78,11 @@ export function WorkplaceDetailPage() {
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
           <p className="text-xs text-gray-500 mb-1">{t('workplaces.payModel')}</p>
           <p className="text-sm font-semibold">{payModelInfo?.label}</p>
+          {workplace.has_consultation_pay && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-full">
+              {t('workplaces.consultationPayEnabled')}
+            </span>
+          )}
           <p className="text-xs text-gray-400 mt-1">{payModelInfo?.description}</p>
         </div>
         <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
@@ -102,10 +107,12 @@ export function WorkplaceDetailPage() {
       </div>
 
       {/* Pricing Rules Editor */}
-      {workplace.pay_model === 'hourly' && (
+      {(workplace.pay_model === 'hourly' || workplace.has_consultation_pay) && (
         <div className="space-y-6">
-          <PricingRulesEditor workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} />
-          <PricingMatrixPreview workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} workplaceColor={workplace.color} />
+          <PricingRulesEditor workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} hasConsultationPay={workplace.has_consultation_pay} />
+          {workplace.pay_model === 'hourly' && (
+            <PricingMatrixPreview workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} workplaceColor={workplace.color} />
+          )}
         </div>
       )}
 

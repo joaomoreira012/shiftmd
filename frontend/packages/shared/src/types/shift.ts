@@ -25,6 +25,7 @@ export interface Shift {
   gcal_event_id?: string;
   title?: string;
   notes?: string;
+  patients_seen?: number;
   created_at: string;
   updated_at: string;
   workplace?: Workplace;
@@ -39,6 +40,7 @@ export interface CreateShiftInput {
   timezone?: string;
   title?: string;
   notes?: string;
+  patients_seen?: number;
   recurrence?: {
     rrule_string: string;
     until_date?: string;
@@ -52,6 +54,7 @@ export interface UpdateShiftInput {
   status?: ShiftStatus;
   title?: string;
   notes?: string;
+  patients_seen?: number;
 }
 
 export interface ShiftFilter {

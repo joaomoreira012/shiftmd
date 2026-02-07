@@ -43,6 +43,9 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
   );
   const [title, setTitle] = useState(existingShift?.title || '');
   const [notes, setNotes] = useState(existingShift?.notes || '');
+  const [patientsSeen, setPatientsSeen] = useState<string>(
+    existingShift?.patients_seen != null ? String(existingShift.patients_seen) : ''
+  );
 
   const selectedWorkplace = workplaces?.find((w) => w.id === workplaceId);
 
@@ -62,6 +65,8 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
     }
 
     try {
+      const patientsSeenNum = patientsSeen ? parseInt(patientsSeen, 10) : undefined;
+
       if (isEditing) {
         await updateMutation.mutateAsync({
           id: existingShift.id,
@@ -70,6 +75,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
             end_time: endDate.toISOString(),
             title: title || undefined,
             notes: notes || undefined,
+            patients_seen: patientsSeenNum,
           },
         });
         toast.success(t('shifts.shiftUpdated'));
@@ -81,6 +87,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           title: title || undefined,
           notes: notes || undefined,
+          patients_seen: patientsSeenNum,
         });
         toast.success(t('shifts.shiftCreated'));
       }
@@ -200,6 +207,21 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm resize-none"
             />
           </div>
+
+          {/* Patients Seen (only when workplace has consultation pay) */}
+          {selectedWorkplace?.has_consultation_pay && (
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('shifts.patientsSeen')}</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={patientsSeen}
+                onChange={(e) => setPatientsSeen(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+              />
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button

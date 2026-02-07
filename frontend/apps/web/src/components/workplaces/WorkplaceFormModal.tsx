@@ -38,6 +38,7 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
           base_rate_cents: workplace.base_rate_cents,
           currency: workplace.currency,
           monthly_expected_hours: workplace.monthly_expected_hours,
+          has_consultation_pay: workplace.has_consultation_pay,
           contact_name: workplace.contact_name || '',
           contact_phone: workplace.contact_phone || '',
           contact_email: workplace.contact_email || '',
@@ -49,6 +50,7 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
           pay_model: 'hourly',
           base_rate_cents: 0,
           currency: 'EUR',
+          has_consultation_pay: false,
         },
   });
 
@@ -173,6 +175,18 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
               />
             </div>
           )}
+
+          {/* Consultation Pay Toggle */}
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('has_consultation_pay')}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-primary-600 focus:ring-primary-500"
+              />
+              <span className="text-sm font-medium">{t('workplaces.hasConsultationPay')}</span>
+            </label>
+          </div>
 
           {/* Address */}
           <div>

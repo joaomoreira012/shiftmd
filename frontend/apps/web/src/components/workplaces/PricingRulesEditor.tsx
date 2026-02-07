@@ -12,28 +12,10 @@ import type { PricingRule, DayOfWeek } from '@doctor-tracker/shared/types/workpl
 interface Props {
   workplaceId: string;
   baseRateCents: number;
+  hasConsultationPay?: boolean;
 }
 
-const PRESETS = [
-  {
-    name: 'Standard Hospital',
-    rules: [
-      { name: 'Weekday Day', priority: 1, time_start: '08:00', time_end: '20:00', days_of_week: WEEKDAYS as DayOfWeek[], rate_multiplier: 1.0 },
-      { name: 'Weekday Night', priority: 2, time_start: '20:00', time_end: '08:00', days_of_week: WEEKDAYS as DayOfWeek[], rate_multiplier: 1.25 },
-      { name: 'Weekend Day', priority: 3, time_start: '08:00', time_end: '20:00', days_of_week: WEEKEND as DayOfWeek[], rate_multiplier: 1.5 },
-      { name: 'Weekend Night', priority: 4, time_start: '20:00', time_end: '08:00', days_of_week: WEEKEND as DayOfWeek[], rate_multiplier: 1.75 },
-    ],
-  },
-  {
-    name: 'Simple Day/Night',
-    rules: [
-      { name: 'Day', priority: 1, time_start: '08:00', time_end: '22:00', days_of_week: ALL_DAYS as DayOfWeek[], rate_multiplier: 1.0 },
-      { name: 'Night', priority: 2, time_start: '22:00', time_end: '08:00', days_of_week: ALL_DAYS as DayOfWeek[], rate_multiplier: 1.25 },
-    ],
-  },
-];
-
-export function PricingRulesEditor({ workplaceId, baseRateCents }: Props) {
+export function PricingRulesEditor({ workplaceId, baseRateCents, hasConsultationPay }: Props) {
   const { t } = useTranslation();
   const { data: rules, isLoading } = usePricingRules(workplaceId);
   const createMutation = useCreatePricingRule();
@@ -42,46 +24,13 @@ export function PricingRulesEditor({ workplaceId, baseRateCents }: Props) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingRule, setEditingRule] = useState<PricingRule | null>(null);
 
-  const applyPreset = async (preset: typeof PRESETS[number]) => {
-    try {
-      // Delete existing rules first
-      if (rules) {
-        for (const rule of rules) {
-          await deleteMutation.mutateAsync({ workplaceId, ruleId: rule.id });
-        }
-      }
-      // Create new rules from preset
-      for (const rule of preset.rules) {
-        await createMutation.mutateAsync({ workplaceId, data: rule });
-      }
-      toast.success(t('pricing.presetApplied', { name: preset.name }));
-    } catch {
-      toast.error('Failed to apply preset');
-    }
-  };
-
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
       <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">{t('pricing.title')}</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              {t('pricing.description')}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {PRESETS.map((preset) => (
-              <button
-                key={preset.name}
-                onClick={() => applyPreset(preset)}
-                className="px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                {preset.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        <h2 className="text-lg font-semibold">{t('pricing.title')}</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          {t('pricing.description')}
+        </p>
       </div>
 
       <div className="p-6">
@@ -96,6 +45,7 @@ export function PricingRulesEditor({ workplaceId, baseRateCents }: Props) {
                 key={rule.id}
                 rule={rule}
                 baseRateCents={baseRateCents}
+                hasConsultationPay={hasConsultationPay}
                 onEdit={() => setEditingRule(rule)}
                 onDelete={() => deleteMutation.mutate({ workplaceId, ruleId: rule.id })}
                 isDeleting={deleteMutation.isPending}
@@ -122,6 +72,7 @@ export function PricingRulesEditor({ workplaceId, baseRateCents }: Props) {
           existingRule={editingRule}
           nextPriority={rules ? Math.max(0, ...rules.map(r => r.priority)) + 1 : 1}
           baseRateCents={baseRateCents}
+          hasConsultationPay={hasConsultationPay}
           onClose={() => { setShowAddForm(false); setEditingRule(null); }}
         />
       )}
@@ -132,12 +83,14 @@ export function PricingRulesEditor({ workplaceId, baseRateCents }: Props) {
 function RuleCard({
   rule,
   baseRateCents,
+  hasConsultationPay,
   onEdit,
   onDelete,
   isDeleting,
 }: {
   rule: PricingRule;
   baseRateCents: number;
+  hasConsultationPay?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   isDeleting: boolean;
@@ -164,7 +117,14 @@ function RuleCard({
           {dayLabels} &middot; {rule.time_start || '00:00'}–{rule.time_end || '24:00'}
         </p>
       </div>
-      <span className="text-sm font-semibold text-income whitespace-nowrap">{rateDisplay}</span>
+      <div className="text-right whitespace-nowrap">
+        <span className="text-sm font-semibold text-income">{rateDisplay}</span>
+        {hasConsultationPay && rule.consultation_rate_cents != null && (
+          <p className="text-xs text-blue-600 dark:text-blue-400">
+            +{formatEuros(rule.consultation_rate_cents)} {t('pricing.perConsultation')}
+          </p>
+        )}
+      </div>
       <div className="flex gap-1">
         <button onClick={onEdit} className="p-1.5 text-gray-400 hover:text-gray-600 text-xs">{t('common.edit')}</button>
         <button onClick={onDelete} disabled={isDeleting} className="p-1.5 text-gray-400 hover:text-red-500 text-xs">{t('common.del')}</button>
@@ -178,12 +138,14 @@ function RuleFormModal({
   existingRule,
   nextPriority,
   baseRateCents,
+  hasConsultationPay,
   onClose,
 }: {
   workplaceId: string;
   existingRule: PricingRule | null;
   nextPriority: number;
   baseRateCents: number;
+  hasConsultationPay?: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -213,6 +175,7 @@ function RuleFormModal({
           days_of_week: existingRule.days_of_week || [],
           rate_cents: existingRule.rate_cents,
           rate_multiplier: existingRule.rate_multiplier,
+          consultation_rate_cents: existingRule.consultation_rate_cents,
         }
       : {
           name: '',
@@ -389,6 +352,28 @@ function RuleFormModal({
               </div>
             )}
           </div>
+
+          {/* Consultation Rate (optional, only when workplace has consultation pay) */}
+          {hasConsultationPay && (
+            <div>
+              <label className="block text-sm font-medium mb-1">{t('pricing.consultationRate')}</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">EUR</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="w-full pl-12 pr-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                  value={centsToEuros(watch('consultation_rate_cents') ?? 0)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setValue('consultation_rate_cents', val ? eurosToCents(val) : undefined);
+                  }}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">{t('pricing.perConsultation')}</p>
+            </div>
+          )}
 
           {/* Schema-level error */}
           {errors.root && <p className="text-red-500 text-xs">{errors.root.message}</p>}

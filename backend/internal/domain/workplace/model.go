@@ -43,6 +43,7 @@ type Workplace struct {
 	Currency      string      `json:"currency"`
 
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours,omitempty"`
+	HasConsultationPay   bool     `json:"has_consultation_pay"`
 
 	ContactName  *string `json:"contact_name,omitempty"`
 	ContactPhone *string `json:"contact_phone,omitempty"`
@@ -66,8 +67,9 @@ type PricingRule struct {
 	DaysOfWeek []DayOfWeek `json:"days_of_week,omitempty"`
 	SpecificDates []string `json:"specific_dates,omitempty"` // YYYY-MM-DD format
 
-	RateCents      *money.Cents `json:"rate_cents,omitempty"`
-	RateMultiplier *float64     `json:"rate_multiplier,omitempty"`
+	RateCents              *money.Cents `json:"rate_cents,omitempty"`
+	RateMultiplier         *float64     `json:"rate_multiplier,omitempty"`
+	ConsultationRateCents  *money.Cents `json:"consultation_rate_cents,omitempty"`
 
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -82,6 +84,7 @@ type CreateWorkplaceInput struct {
 	BaseRateCents        int64    `json:"base_rate_cents" validate:"required,min=0"`
 	Currency             string   `json:"currency" validate:"required,len=3"`
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours"`
+	HasConsultationPay   *bool    `json:"has_consultation_pay"`
 	ContactName          *string  `json:"contact_name"`
 	ContactPhone         *string  `json:"contact_phone"`
 	ContactEmail         *string  `json:"contact_email"`
@@ -89,36 +92,39 @@ type CreateWorkplaceInput struct {
 }
 
 type UpdateWorkplaceInput struct {
-	Name                 *string  `json:"name"`
-	Address              *string  `json:"address"`
-	Color                *string  `json:"color"`
+	Name                 *string   `json:"name"`
+	Address              *string   `json:"address"`
+	Color                *string   `json:"color"`
 	PayModel             *PayModel `json:"pay_model" validate:"omitempty,oneof=hourly per_turn monthly"`
-	BaseRateCents        *int64   `json:"base_rate_cents" validate:"omitempty,min=0"`
-	MonthlyExpectedHours *float64 `json:"monthly_expected_hours"`
-	ContactName          *string  `json:"contact_name"`
-	ContactPhone         *string  `json:"contact_phone"`
-	ContactEmail         *string  `json:"contact_email"`
-	Notes                *string  `json:"notes"`
+	BaseRateCents        *int64    `json:"base_rate_cents" validate:"omitempty,min=0"`
+	MonthlyExpectedHours *float64  `json:"monthly_expected_hours"`
+	HasConsultationPay   *bool     `json:"has_consultation_pay"`
+	ContactName          *string   `json:"contact_name"`
+	ContactPhone         *string   `json:"contact_phone"`
+	ContactEmail         *string   `json:"contact_email"`
+	Notes                *string   `json:"notes"`
 }
 
 type CreatePricingRuleInput struct {
-	Name           string      `json:"name" validate:"required"`
-	Priority       int         `json:"priority" validate:"min=0"`
-	TimeStart      *string     `json:"time_start"`
-	TimeEnd        *string     `json:"time_end"`
-	DaysOfWeek     []DayOfWeek `json:"days_of_week"`
-	SpecificDates  []string    `json:"specific_dates"`
-	RateCents      *int64      `json:"rate_cents"`
-	RateMultiplier *float64    `json:"rate_multiplier"`
+	Name                  string      `json:"name" validate:"required"`
+	Priority              int         `json:"priority" validate:"min=0"`
+	TimeStart             *string     `json:"time_start"`
+	TimeEnd               *string     `json:"time_end"`
+	DaysOfWeek            []DayOfWeek `json:"days_of_week"`
+	SpecificDates         []string    `json:"specific_dates"`
+	RateCents             *int64      `json:"rate_cents"`
+	RateMultiplier        *float64    `json:"rate_multiplier"`
+	ConsultationRateCents *int64      `json:"consultation_rate_cents"`
 }
 
 type UpdatePricingRuleInput struct {
-	Name           *string     `json:"name"`
-	Priority       *int        `json:"priority"`
-	TimeStart      *string     `json:"time_start"`
-	TimeEnd        *string     `json:"time_end"`
-	DaysOfWeek     []DayOfWeek `json:"days_of_week"`
-	SpecificDates  []string    `json:"specific_dates"`
-	RateCents      *int64      `json:"rate_cents"`
-	RateMultiplier *float64    `json:"rate_multiplier"`
+	Name                  *string     `json:"name"`
+	Priority              *int        `json:"priority"`
+	TimeStart             *string     `json:"time_start"`
+	TimeEnd               *string     `json:"time_end"`
+	DaysOfWeek            []DayOfWeek `json:"days_of_week"`
+	SpecificDates         []string    `json:"specific_dates"`
+	RateCents             *int64      `json:"rate_cents"`
+	RateMultiplier        *float64    `json:"rate_multiplier"`
+	ConsultationRateCents *int64      `json:"consultation_rate_cents"`
 }

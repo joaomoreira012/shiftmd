@@ -70,6 +70,11 @@ export function WorkplacesPage() {
                     {t('workplaces.archived')}
                   </span>
                 )}
+                {wp.has_consultation_pay && (
+                  <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 rounded-full text-blue-600 dark:text-blue-300">
+                    {t('workplaces.consultationPayEnabled')}
+                  </span>
+                )}
               </div>
               <div className="flex items-center justify-between text-sm text-gray-500">
                 <span>{payModelLabel(wp.pay_model)}</span>

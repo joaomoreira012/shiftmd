@@ -69,6 +69,8 @@
     "perHourShort": "per hour",
     "perTurnShort": "per turn",
     "perMonthShort": "per month",
+    "hasConsultationPay": "Also pays per consultation",
+    "consultationPayEnabled": "Consultation pay",
     "createWorkplace": "Create Workplace"
   },
   "shifts": {
@@ -97,6 +99,7 @@
     "changeStatus": "Change Status",
     "deleteShift": "Delete this shift?",
     "cannotUndo": "This action cannot be undone.",
+    "patientsSeen": "Patients Seen",
     "deleting": "Deleting..."
   },
   "finance": {
@@ -216,6 +219,8 @@
     "updateRule": "Update Rule",
     "ruleAdded": "Rule added",
     "ruleUpdated": "Rule updated",
+    "consultationRate": "Consultation Rate",
+    "perConsultation": "per consultation",
     "presetApplied": "Applied \"{{name}}\" preset"
   },
   "theme": {

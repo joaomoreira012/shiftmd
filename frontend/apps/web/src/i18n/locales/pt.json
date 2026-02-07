@@ -69,6 +69,8 @@
     "perHourShort": "por hora",
     "perTurnShort": "por turno",
     "perMonthShort": "por mes",
+    "hasConsultationPay": "Tambem paga por consulta",
+    "consultationPayEnabled": "Pagamento por consulta",
     "createWorkplace": "Criar Local"
   },
   "shifts": {
@@ -97,6 +99,7 @@
     "changeStatus": "Alterar Estado",
     "deleteShift": "Eliminar este turno?",
     "cannotUndo": "Esta acao nao pode ser desfeita.",
+    "patientsSeen": "Doentes Atendidos",
     "deleting": "A eliminar..."
   },
   "finance": {
@@ -216,6 +219,8 @@
     "updateRule": "Atualizar Regra",
     "ruleAdded": "Regra adicionada",
     "ruleUpdated": "Regra atualizada",
+    "consultationRate": "Taxa por Consulta",
+    "perConsultation": "por consulta",
     "presetApplied": "Predefinicao \"{{name}}\" aplicada"
   },
   "theme": {

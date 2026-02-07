@@ -25,6 +25,11 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input CreateWorkplaceInput) (*Workplace, error) {
+	hasConsultationPay := false
+	if input.HasConsultationPay != nil {
+		hasConsultationPay = *input.HasConsultationPay
+	}
+
 	w := &Workplace{
 		ID:                   uuid.New(),
 		UserID:               userID,
@@ -35,6 +40,7 @@ func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input C
 		BaseRateCents:        money.Cents(input.BaseRateCents),
 		Currency:             input.Currency,
 		MonthlyExpectedHours: input.MonthlyExpectedHours,
+		HasConsultationPay:   hasConsultationPay,
 		ContactName:          input.ContactName,
 		ContactPhone:         input.ContactPhone,
 		ContactEmail:         input.ContactEmail,
@@ -86,6 +92,9 @@ func (s *Service) UpdateWorkplace(ctx context.Context, id uuid.UUID, input Updat
 	if input.MonthlyExpectedHours != nil {
 		w.MonthlyExpectedHours = input.MonthlyExpectedHours
 	}
+	if input.HasConsultationPay != nil {
+		w.HasConsultationPay = *input.HasConsultationPay
+	}
 	if input.ContactName != nil {
 		w.ContactName = input.ContactName
 	}
@@ -123,21 +132,27 @@ func (s *Service) CreatePricingRule(ctx context.Context, workplaceID uuid.UUID, 
 		c := money.Cents(*input.RateCents)
 		rateCents = &c
 	}
+	var consultationRateCents *money.Cents
+	if input.ConsultationRateCents != nil {
+		c := money.Cents(*input.ConsultationRateCents)
+		consultationRateCents = &c
+	}
 
 	rule := &PricingRule{
-		ID:             uuid.New(),
-		WorkplaceID:    workplaceID,
-		Name:           input.Name,
-		Priority:       input.Priority,
-		TimeStart:      input.TimeStart,
-		TimeEnd:        input.TimeEnd,
-		DaysOfWeek:     input.DaysOfWeek,
-		SpecificDates:  input.SpecificDates,
-		RateCents:      rateCents,
-		RateMultiplier: input.RateMultiplier,
-		IsActive:       true,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		ID:                    uuid.New(),
+		WorkplaceID:           workplaceID,
+		Name:                  input.Name,
+		Priority:              input.Priority,
+		TimeStart:             input.TimeStart,
+		TimeEnd:               input.TimeEnd,
+		DaysOfWeek:            input.DaysOfWeek,
+		SpecificDates:         input.SpecificDates,
+		RateCents:             rateCents,
+		RateMultiplier:        input.RateMultiplier,
+		ConsultationRateCents: consultationRateCents,
+		IsActive:              true,
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
 	}
 
 	if err := s.repo.CreatePricingRule(ctx, rule); err != nil {
@@ -182,6 +197,10 @@ func (s *Service) UpdatePricingRule(ctx context.Context, id uuid.UUID, input Upd
 	if input.RateMultiplier != nil {
 		rule.RateMultiplier = input.RateMultiplier
 		rule.RateCents = nil
+	}
+	if input.ConsultationRateCents != nil {
+		c := money.Cents(*input.ConsultationRateCents)
+		rule.ConsultationRateCents = &c
 	}
 
 	rule.UpdatedAt = time.Now()

@@ -34,8 +34,9 @@ type Shift struct {
 	GCalEtag     *string    `json:"gcal_etag,omitempty"`
 	LastSyncedAt *time.Time `json:"last_synced_at,omitempty"`
 
-	Title *string `json:"title,omitempty"`
-	Notes *string `json:"notes,omitempty"`
+	Title        *string `json:"title,omitempty"`
+	Notes        *string `json:"notes,omitempty"`
+	PatientsSeen *int    `json:"patients_seen,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -86,23 +87,25 @@ type ShiftEarning struct {
 }
 
 type CreateShiftInput struct {
-	WorkplaceID uuid.UUID `json:"workplace_id" validate:"required"`
-	StartTime   time.Time `json:"start_time" validate:"required"`
-	EndTime     time.Time `json:"end_time" validate:"required,gtfield=StartTime"`
-	Timezone    string    `json:"timezone"`
-	Title       *string   `json:"title"`
-	Notes       *string   `json:"notes"`
+	WorkplaceID  uuid.UUID `json:"workplace_id" validate:"required"`
+	StartTime    time.Time `json:"start_time" validate:"required"`
+	EndTime      time.Time `json:"end_time" validate:"required,gtfield=StartTime"`
+	Timezone     string    `json:"timezone"`
+	Title        *string   `json:"title"`
+	Notes        *string   `json:"notes"`
+	PatientsSeen *int      `json:"patients_seen"`
 
 	// Recurrence (optional)
 	Recurrence *CreateRecurrenceInput `json:"recurrence,omitempty"`
 }
 
 type UpdateShiftInput struct {
-	StartTime *time.Time `json:"start_time"`
-	EndTime   *time.Time `json:"end_time"`
-	Status    *ShiftStatus `json:"status"`
-	Title     *string    `json:"title"`
-	Notes     *string    `json:"notes"`
+	StartTime    *time.Time   `json:"start_time"`
+	EndTime      *time.Time   `json:"end_time"`
+	Status       *ShiftStatus `json:"status"`
+	Title        *string      `json:"title"`
+	Notes        *string      `json:"notes"`
+	PatientsSeen *int         `json:"patients_seen"`
 }
 
 type CreateRecurrenceInput struct {
