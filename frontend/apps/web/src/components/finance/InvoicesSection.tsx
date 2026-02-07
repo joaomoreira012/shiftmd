@@ -156,8 +156,8 @@ function InvoiceFormModal({ workplaces, onClose }: { workplaces: Workplace[]; on
   const [periodStart, setPeriodStart] = useState('');
   const [periodEnd, setPeriodEnd] = useState('');
   const [grossEuros, setGrossEuros] = useState('');
-  const [withholdingRate, setWithholdingRate] = useState('0.25');
-  const [ivaRate, setIvaRate] = useState('0');
+  const withholdingRate = '0.23';
+  const ivaRate = '0';
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [issuedAt, setIssuedAt] = useState('');
   const [error, setError] = useState('');
@@ -258,28 +258,15 @@ function InvoiceFormModal({ workplaces, onClose }: { workplaces: Workplace[]; on
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium mb-1">{t('finance.withholdingRate')}</label>
-              <select
-                value={withholdingRate}
-                onChange={(e) => setWithholdingRate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
-              >
-                <option value="0.25">25% (Medical)</option>
-                <option value="0.20">20%</option>
-                <option value="0.115">11.5%</option>
-                <option value="0">0% (Exempt)</option>
-              </select>
+              <div className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-600 dark:text-gray-400">
+                23%
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">{t('finance.ivaRate')}</label>
-              <select
-                value={ivaRate}
-                onChange={(e) => setIvaRate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
-              >
-                <option value="0">0% (Medical exempt)</option>
-                <option value="0.23">23%</option>
-                <option value="0.06">6%</option>
-              </select>
+              <div className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-600 dark:text-gray-400">
+                0%
+              </div>
             </div>
           </div>
 

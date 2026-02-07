@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -41,6 +41,21 @@ export function CalendarPage() {
   // Date range for fetching shifts
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const { data: shifts, isLoading: shiftsLoading } = useShiftsInRange(dateRange.start, dateRange.end);
+
+  // Calendar container height (FullCalendar needs a pixel value for timeGrid scroll)
+  const calendarContainerRef = useRef<HTMLDivElement>(null);
+  const [calendarHeight, setCalendarHeight] = useState(600);
+
+  useEffect(() => {
+    const el = calendarContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height;
+      if (h && h > 0) setCalendarHeight(Math.floor(h));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Modals
   const [createInfo, setCreateInfo] = useState<{ start: Date; end: Date } | null>(null);
@@ -120,6 +135,18 @@ export function CalendarPage() {
     };
   });
 
+  // Auto-scroll to earliest event so shifts are visible in week/day views
+  const scrollTime = useMemo(() => {
+    if (!events.length) return '08:00:00';
+    const minutes = events.map((e) => {
+      const d = new Date(e.start as string);
+      return d.getHours() * 60 + d.getMinutes();
+    });
+    const earliest = Math.min(...minutes);
+    const h = Math.max(6, Math.floor(earliest / 60) - 1);
+    return `${h.toString().padStart(2, '0')}:00:00`;
+  }, [events]);
+
   const sidebarContent = (
     <>
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -193,9 +220,9 @@ export function CalendarPage() {
       )}
 
       {/* Calendar */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         {/* View controls */}
-        <div className="flex items-center justify-between mb-4 gap-2">
+        <div className="flex items-center justify-between mb-4 gap-2 flex-shrink-0">
           <h1 className="text-xl lg:text-2xl font-bold">{t('calendar.title')}</h1>
           <div className="flex items-center gap-2">
             <button
@@ -224,12 +251,12 @@ export function CalendarPage() {
 
         {/* FullCalendar */}
         {shiftsLoading && !shifts ? (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-3">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-3 flex-1 min-h-0">
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-[400px] w-full" />
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-2 lg:p-4 calendar-container">
+          <div ref={calendarContainerRef} className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-2 lg:p-4 calendar-container flex-1 min-h-0">
             <FullCalendar
               ref={calendarRef}
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -249,7 +276,7 @@ export function CalendarPage() {
               slotMaxTime="30:00:00"
               slotDuration="00:30:00"
               snapDuration="00:15:00"
-              scrollTime="08:00:00"
+              scrollTime={scrollTime}
               nowIndicator
               events={events}
               datesSet={handleDatesSet}
@@ -257,7 +284,7 @@ export function CalendarPage() {
               eventClick={handleEventClick}
               eventDrop={handleEventDrop}
               eventResize={handleEventResize}
-              height="auto"
+              height={calendarHeight}
               eventDisplay="block"
               eventTimeFormat={{
                 hour: '2-digit',

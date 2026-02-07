@@ -29,7 +29,7 @@ export function createApiClient(baseUrl: string, tokenProvider: TokenProvider): 
             }
 
             try {
-              const refreshResponse = await ky.post(`${baseUrl}/api/v1/auth/refresh`, {
+              const refreshResponse = await ky.post('/api/v1/auth/refresh', {
                 json: { refresh_token: refreshToken },
               }).json<{ data: { access_token: string; refresh_token: string } }>();
 

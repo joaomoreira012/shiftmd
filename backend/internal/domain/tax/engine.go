@@ -16,7 +16,7 @@ type YearConfig struct {
 	SSRate                 float64     `json:"ss_rate"`                  // 0.214
 	SSIncomeCoefficient    float64     `json:"ss_income_coefficient"`    // 0.70
 	IASValueCents          money.Cents `json:"ias_value_cents"`          // IAS in cents
-	DefaultWithholdingRate float64     `json:"default_withholding_rate"` // 0.25
+	DefaultWithholdingRate float64     `json:"default_withholding_rate"` // 0.23
 	MinExistenceCents      money.Cents `json:"min_existence_cents"`
 	SimplifiedCoefficient  float64     `json:"simplified_coefficient"`   // 0.75 for Cat B services
 }

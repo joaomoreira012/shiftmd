@@ -20,7 +20,7 @@ func Portugal2026Config() YearConfig {
 		SSRate:                 0.214,
 		SSIncomeCoefficient:    0.70,
 		IASValueCents:          money.FromEuros(537.13),
-		DefaultWithholdingRate: 0.25,
+		DefaultWithholdingRate: 0.23,
 		MinExistenceCents:      money.FromEuros(12880),
 		SimplifiedCoefficient:  0.75,
 	}
@@ -44,7 +44,7 @@ func Portugal2025Config() YearConfig {
 		SSRate:                 0.214,
 		SSIncomeCoefficient:    0.70,
 		IASValueCents:          money.FromEuros(522.50),
-		DefaultWithholdingRate: 0.25,
+		DefaultWithholdingRate: 0.23,
 		MinExistenceCents:      money.FromEuros(12180),
 		SimplifiedCoefficient:  0.75,
 	}

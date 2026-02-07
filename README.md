@@ -1,3 +1,4 @@
+
 # ShiftMD
 
 Shift tracking and finance management for independent doctors in Portugal.

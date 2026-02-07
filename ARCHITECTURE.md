@@ -300,7 +300,7 @@ CREATE TABLE invoices (
     period_start        DATE NOT NULL,
     period_end          DATE NOT NULL,
     gross_amount_cents  BIGINT NOT NULL,
-    withholding_rate    NUMERIC(5,4) NOT NULL,   -- 0.2500 for 25%
+    withholding_rate    NUMERIC(5,4) NOT NULL,   -- 0.2300 for 23%
     withholding_cents   BIGINT NOT NULL,
     iva_rate            NUMERIC(5,4) NOT NULL DEFAULT 0,
     iva_cents           BIGINT NOT NULL DEFAULT 0,
@@ -323,7 +323,7 @@ CREATE TABLE tax_year_configs (
     ss_rate                 NUMERIC(5,4) NOT NULL,  -- 0.2140
     ss_income_coefficient   NUMERIC(5,4) NOT NULL,  -- 0.70
     ias_value_cents         BIGINT NOT NULL,
-    default_withholding_rate NUMERIC(5,4) NOT NULL,  -- 0.2500
+    default_withholding_rate NUMERIC(5,4) NOT NULL,  -- 0.2300
     min_existence_cents     BIGINT NOT NULL,
     standard_iva_rate       NUMERIC(5,4) NOT NULL DEFAULT 0.2300,
     notes           TEXT,
@@ -564,7 +564,7 @@ quarterly_payment = monthly_contribution * 3
 Declaration schedule: Jan (Oct-Dec), Apr (Jan-Mar), Jul (Apr-Jun), Oct (Jul-Sep)
 
 #### Withholding Tax (Retencao na Fonte)
-- Default for medical professionals: **25%** (Article 151 CIRS)
+- Default for medical professionals: **23%** (Article 151 CIRS)
 - Exempt if annual income < EUR 15,000
 - Per invoice: `withholding = gross * rate`
 

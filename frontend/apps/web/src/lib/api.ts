@@ -6,7 +6,7 @@ import { createFinanceHooks } from '@doctor-tracker/shared/hooks/useFinance';
 import { createGCalHooks } from '@doctor-tracker/shared/hooks/useGCal';
 import { webTokenProvider } from './token-provider';
 
-export const apiClient = createApiClient('', webTokenProvider);
+export const apiClient = createApiClient('/', webTokenProvider);
 
 export const { useCurrentUser, useLogin, useRegister, useLogout } =
   createAuthHooks(apiClient);

@@ -51,7 +51,7 @@ export const IAS_2025 = 52250; // EUR 522.50 in cents
 export const MEDICAL_PROFESSIONAL_COEFFICIENT = 0.75;
 
 // Default withholding rate for medical professionals
-export const DEFAULT_WITHHOLDING_RATE = 0.25;
+export const DEFAULT_WITHHOLDING_RATE = 0.23;
 
 // Minimum existence (minimo de existencia)
 export const MIN_EXISTENCE_2026 = 1288000; // EUR 12,880 in cents

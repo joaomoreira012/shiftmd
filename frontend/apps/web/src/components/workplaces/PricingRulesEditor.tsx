@@ -220,7 +220,7 @@ function RuleFormModal({
           time_start: '08:00',
           time_end: '20:00',
           days_of_week: [...WEEKDAYS] as DayOfWeek[],
-          rate_multiplier: 1.0,
+          rate_cents: baseRateCents,
         },
   });
 

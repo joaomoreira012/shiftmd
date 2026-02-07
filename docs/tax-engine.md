@@ -68,7 +68,7 @@ Applied per invoice:
 withholding = gross_amount * withholding_rate
 ```
 
-- Default rate for medical professionals (Article 151 CIRS): **25%**
+- Default rate for medical professionals (Article 151 CIRS): **23%**
 - Exempt if annual income < 15,000 EUR
 - Configurable per workplace
 
