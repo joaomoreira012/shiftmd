@@ -15,4 +15,7 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ];
 
+// Enable package.json "exports" field resolution (needed for @doctor-tracker/shared subpath exports)
+config.resolver.unstable_enablePackageExports = true;
+
 module.exports = config;
