@@ -112,10 +112,10 @@ export function WorkplaceDetailPage() {
       </div>
 
       {/* Pricing Rules Editor */}
-      {(workplace.pay_model === 'hourly' || workplace.has_consultation_pay || workplace.has_outside_visit_pay) && (
+      {(workplace.pay_model === 'hourly' || workplace.pay_model === 'per_turn' || workplace.has_consultation_pay || workplace.has_outside_visit_pay) && (
         <div className="space-y-6">
           <PricingRulesEditor workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} hasConsultationPay={workplace.has_consultation_pay} hasOutsideVisitPay={workplace.has_outside_visit_pay} />
-          {workplace.pay_model === 'hourly' && (
+          {(workplace.pay_model === 'hourly' || workplace.pay_model === 'per_turn') && (
             <PricingMatrixPreview workplaceId={workplace.id} baseRateCents={workplace.base_rate_cents} workplaceColor={workplace.color} />
           )}
         </div>
