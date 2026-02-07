@@ -31,6 +31,12 @@
           "configureAndroidBackup": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a902770e-95de-4edf-9780-7db02a5c42b3"
+      }
+    },
+    "owner": "joaomoreirapc"
   }
 }
