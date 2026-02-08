@@ -9,6 +9,23 @@ function toLocalDatetime(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function defaultDayTimes(baseDate: Date) {
+  const start = new Date(baseDate);
+  start.setHours(8, 0, 0, 0);
+  const end = new Date(baseDate);
+  end.setHours(20, 0, 0, 0);
+  return { start, end };
+}
+
+function defaultNightTimes(baseDate: Date) {
+  const start = new Date(baseDate);
+  start.setHours(20, 0, 0, 0);
+  const end = new Date(baseDate);
+  end.setDate(end.getDate() + 1);
+  end.setHours(8, 0, 0, 0);
+  return { start, end };
+}
+
 interface Props {
   defaultStart?: Date;
   defaultEnd?: Date;
@@ -27,22 +44,31 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
   const [workplaceId, setWorkplaceId] = useState(
     existingShift?.workplace_id || workplaces?.[0]?.id || ''
   );
+  const initialDay = defaultStart
+    ? defaultDayTimes(defaultStart)
+    : defaultDayTimes(new Date());
+
   const [startTime, setStartTime] = useState(
     existingShift
       ? toLocalDatetime(new Date(existingShift.start_time))
       : defaultStart
         ? toLocalDatetime(defaultStart)
-        : ''
+        : toLocalDatetime(initialDay.start)
   );
   const [endTime, setEndTime] = useState(
     existingShift
       ? toLocalDatetime(new Date(existingShift.end_time))
       : defaultEnd
         ? toLocalDatetime(defaultEnd)
-        : ''
+        : toLocalDatetime(initialDay.end)
   );
-  const [title, setTitle] = useState(existingShift?.title || '');
-  const [notes, setNotes] = useState(existingShift?.notes || '');
+
+  const applyPreset = (preset: 'day' | 'night') => {
+    const baseDate = startTime ? new Date(startTime) : new Date();
+    const times = preset === 'day' ? defaultDayTimes(baseDate) : defaultNightTimes(baseDate);
+    setStartTime(toLocalDatetime(times.start));
+    setEndTime(toLocalDatetime(times.end));
+  };
   const [patientsSeen, setPatientsSeen] = useState<string>(
     existingShift?.patients_seen != null ? String(existingShift.patients_seen) : ''
   );
@@ -77,8 +103,6 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
           data: {
             start_time: startDate.toISOString(),
             end_time: endDate.toISOString(),
-            title: title || undefined,
-            notes: notes || undefined,
             patients_seen: patientsSeenNum,
             outside_visits: outsideVisitsNum,
           },
@@ -90,8 +114,6 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
           start_time: startDate.toISOString(),
           end_time: endDate.toISOString(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          title: title || undefined,
-          notes: notes || undefined,
           patients_seen: patientsSeenNum,
           outside_visits: outsideVisitsNum,
         });
@@ -132,7 +154,7 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
                     key={wp.id}
                     className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
                       workplaceId === wp.id
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-950'
+                        ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -155,6 +177,26 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
               {(!workplaces || workplaces.filter((w) => w.is_active).length === 0) && (
                 <p className="text-sm text-gray-400">{t('shifts.createFirst')}</p>
               )}
+            </div>
+          )}
+
+          {/* Day/Night preset */}
+          {!isEditing && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => applyPreset('day')}
+                className="flex-1 py-2 px-3 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                {t('shifts.dayShift')} (08:00–20:00)
+              </button>
+              <button
+                type="button"
+                onClick={() => applyPreset('night')}
+                className="flex-1 py-2 px-3 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                {t('shifts.nightShift')} (20:00–08:00)
+              </button>
             </div>
           )}
 
@@ -191,28 +233,6 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
               )}
             </div>
           )}
-
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium mb-1">{t('shifts.title')}</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm"
-              placeholder={t('shifts.optionalLabel')}
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium mb-1">{t('shifts.notes')}</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm resize-none"
-            />
-          </div>
 
           {/* Patients Seen (only when workplace has consultation pay) */}
           {selectedWorkplace?.has_consultation_pay && (

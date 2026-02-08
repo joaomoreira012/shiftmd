@@ -103,7 +103,9 @@
     "cannotUndo": "This action cannot be undone.",
     "patientsSeen": "Patients Seen",
     "outsideVisits": "Outside Visits",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "dayShift": "Day",
+    "nightShift": "Night"
   },
   "finance": {
     "title": "Finance",

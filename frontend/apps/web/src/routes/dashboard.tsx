@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useShiftsInRange, useWorkplaces } from '../lib/api';
@@ -12,10 +12,13 @@ export function DashboardPage() {
   const { data: workplaces, isLoading: wpLoading } = useWorkplaces();
   const [showNewShift, setShowNewShift] = useState(false);
 
-  // Fetch upcoming shifts: now -> 14 days ahead
-  const now = new Date();
-  const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 3600000);
-  const { data: upcomingShifts, isLoading: shiftsLoading } = useShiftsInRange(now.toISOString(), twoWeeksLater.toISOString());
+  // Fetch upcoming shifts: now -> 14 days ahead (memoized to avoid infinite re-fetch loop)
+  const [startISO, endISO] = useMemo(() => {
+    const now = new Date();
+    const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 3600000);
+    return [now.toISOString(), twoWeeksLater.toISOString()];
+  }, []);
+  const { data: upcomingShifts, isLoading: shiftsLoading } = useShiftsInRange(startISO, endISO);
 
   const isLoading = wpLoading || shiftsLoading;
 

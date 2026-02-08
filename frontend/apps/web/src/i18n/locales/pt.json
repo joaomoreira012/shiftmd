@@ -103,7 +103,9 @@
     "cannotUndo": "Esta acao nao pode ser desfeita.",
     "patientsSeen": "Doentes Atendidos",
     "outsideVisits": "Visitas Domiciliarias",
-    "deleting": "A eliminar..."
+    "deleting": "A eliminar...",
+    "dayShift": "Dia",
+    "nightShift": "Noite"
   },
   "finance": {
     "title": "Financas",
