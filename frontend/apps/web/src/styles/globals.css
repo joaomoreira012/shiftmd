@@ -54,7 +54,7 @@ body {
 }
 
 .calendar-container .fc .fc-timegrid-slot {
-  height: 2.5rem;
+  height: 1.5rem;
 }
 
 /* Calendar export mode: expand scrollable areas and clean up for capture */

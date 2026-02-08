@@ -32,7 +32,7 @@ const VIEW_LABELS: { key: 'day' | 'week' | 'month'; label: string }[] = [
 ];
 
 export function CalendarPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const calendarRef = useRef<FullCalendar>(null);
   const { currentView, setView, selectedWorkplaceIds, toggleWorkplace } = useAppStore();
   const { data: workplaces } = useWorkplaces();
@@ -309,12 +309,14 @@ export function CalendarPage() {
               editable
               selectable
               selectMirror
-              dayMaxEvents
+              dayMaxEvents={false}
+              locale={i18n.language === 'pt' ? 'pt' : 'en-gb'}
+              firstDay={1}
               weekends
               allDaySlot={false}
               slotMinTime="06:00:00"
               slotMaxTime="30:00:00"
-              slotDuration="00:30:00"
+              slotDuration="01:00:00"
               snapDuration="00:15:00"
               scrollTime={scrollTime}
               nowIndicator
