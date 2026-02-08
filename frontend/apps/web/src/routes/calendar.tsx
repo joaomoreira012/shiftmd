@@ -15,7 +15,8 @@ import { ShiftDetailModal } from '../components/shifts/ShiftDetailModal';
 import { Skeleton } from '../components/ui/Skeleton';
 import { ExportDropdown } from '../components/calendar/ExportDropdown';
 import { exportCalendar, type ExportFormat } from '../lib/calendar-export';
-import type { Shift } from '@doctor-tracker/shared/types/shift';
+import type { Shift, ShiftStatus } from '@doctor-tracker/shared/types/shift';
+import { SHIFT_STATUS_COLORS, ALL_SHIFT_STATUSES } from '@doctor-tracker/shared/constants/shiftStatus';
 
 type CalendarView = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth';
 
@@ -25,11 +26,7 @@ const VIEW_MAP: Record<string, CalendarView> = {
   month: 'dayGridMonth',
 };
 
-const VIEW_LABELS: { key: 'day' | 'week' | 'month'; label: string }[] = [
-  { key: 'day', label: 'Day' },
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-];
+const VIEW_KEYS: ('day' | 'week' | 'month')[] = ['day', 'week', 'month'];
 
 export function CalendarPage() {
   const { t, i18n } = useTranslation();
@@ -41,6 +38,7 @@ export function CalendarPage() {
   const gcalSync = useGCalSync();
   const [filterOpen, setFilterOpen] = useState(false);
   const [exportingWorkplaceId, setExportingWorkplaceId] = useState<string | null>(null);
+  const [selectedStatuses, setSelectedStatuses] = useState<ShiftStatus[]>([...ALL_SHIFT_STATUSES]);
 
   // Date range for fetching shifts
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -147,24 +145,36 @@ export function CalendarPage() {
     }
   }, [workplaces, t]);
 
-  // Filter shifts by selected workplaces
+  const toggleStatus = (status: ShiftStatus) => {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  };
+
+  // Filter shifts by selected workplaces and statuses
   const filteredShifts = shifts?.filter((s) =>
-    selectedWorkplaceIds.length === 0 || selectedWorkplaceIds.includes(s.workplace_id)
+    (selectedWorkplaceIds.length === 0 || selectedWorkplaceIds.includes(s.workplace_id)) &&
+    selectedStatuses.includes(s.status)
   );
 
   // Map shifts to FullCalendar events
   const events: EventInput[] = (filteredShifts || []).map((shift) => {
     const workplace = workplaces?.find((w) => w.id === shift.workplace_id);
-    const earningsLabel = shift.total_earnings != null
+    const isCancelled = shift.status === 'cancelled';
+    const statusIcon = SHIFT_STATUS_COLORS[shift.status].icon;
+    const earningsLabel = !isCancelled && shift.total_earnings != null
       ? ` (${formatEuros(shift.total_earnings)})`
       : '';
+    const wpColor = workplace?.color || '#6B7280';
     return {
       id: shift.id,
-      title: `${workplace?.name || 'Shift'}${earningsLabel}`,
+      title: `${statusIcon} ${workplace?.name || 'Shift'}${earningsLabel}`,
       start: shift.start_time,
       end: shift.end_time,
-      backgroundColor: workplace?.color || '#6B7280',
-      borderColor: workplace?.color || '#6B7280',
+      backgroundColor: isCancelled ? '#ef4444' : wpColor,
+      borderColor: isCancelled ? '#dc2626' : wpColor,
+      classNames: [`shift-status-${shift.status}`],
+      editable: shift.status === 'scheduled' || shift.status === 'confirmed',
       extendedProps: { shift },
     };
   });
@@ -183,6 +193,24 @@ export function CalendarPage() {
 
   const sidebarContent = (
     <>
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+        <h3 className="text-sm font-semibold mb-3">{t('calendar.statusFilter')}</h3>
+        {ALL_SHIFT_STATUSES.map((status) => (
+          <label key={status} className="flex items-center gap-2 cursor-pointer py-1.5">
+            <input
+              type="checkbox"
+              checked={selectedStatuses.includes(status)}
+              onChange={() => toggleStatus(status)}
+              className="rounded border-gray-300"
+            />
+            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${SHIFT_STATUS_COLORS[status].badge}`}>
+              {SHIFT_STATUS_COLORS[status].icon}
+            </span>
+            <span className="text-sm">{t(`shifts.${status}`)}</span>
+          </label>
+        ))}
+      </div>
+
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-3">{t('calendar.workplaces')}</h3>
         {workplaces?.map((wp) => (
@@ -272,7 +300,7 @@ export function CalendarPage() {
               {t('calendar.filter')}
             </button>
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
-              {VIEW_LABELS.map(({ key }) => (
+              {VIEW_KEYS.map((key) => (
                 <button
                   key={key}
                   onClick={() => handleViewChange(key)}

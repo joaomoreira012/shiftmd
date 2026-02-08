@@ -51,7 +51,8 @@
     "exportPdf": "Export as PDF",
     "exporting": "Exporting...",
     "exportSuccess": "Calendar exported successfully",
-    "exportError": "Failed to export calendar"
+    "exportError": "Failed to export calendar",
+    "statusFilter": "Status"
   },
   "workplaces": {
     "title": "Workplaces",

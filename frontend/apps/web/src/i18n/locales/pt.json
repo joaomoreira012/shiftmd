@@ -51,7 +51,8 @@
     "exportPdf": "Exportar como PDF",
     "exporting": "A exportar...",
     "exportSuccess": "Calendario exportado com sucesso",
-    "exportError": "Falha ao exportar calendario"
+    "exportError": "Falha ao exportar calendario",
+    "statusFilter": "Estado"
   },
   "workplaces": {
     "title": "Locais de Trabalho",
