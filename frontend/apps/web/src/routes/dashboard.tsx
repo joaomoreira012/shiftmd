@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { useShiftsInRange, useUpdateShift, useWorkplaces } from '../lib/api';
+import { useShiftsInRange, useUpdateShift, useWorkplaces, useProjections } from '../lib/api';
 import { formatEuros } from '@doctor-tracker/shared/utils/currency';
+import { calculatePortugueseTax } from '@doctor-tracker/shared/utils/tax';
 import { ShiftFormModal } from '../components/shifts/ShiftFormModal';
 import { ShiftConfirmCard } from '../components/shifts/ShiftConfirmCard';
 import { Skeleton } from '../components/ui/Skeleton';
@@ -14,35 +15,33 @@ export function DashboardPage() {
   const { data: workplaces, isLoading: wpLoading } = useWorkplaces();
   const [showNewShift, setShowNewShift] = useState(false);
   const updateShift = useUpdateShift();
+  const currentYear = new Date().getFullYear();
+  const { data: projections } = useProjections(currentYear);
 
-  // Fetch upcoming shifts: now -> 14 days ahead (memoized to avoid infinite re-fetch loop)
-  const [startISO, endISO] = useMemo(() => {
-    const now = new Date();
-    const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 3600000);
-    return [now.toISOString(), twoWeeksLater.toISOString()];
-  }, []);
-  const { data: upcomingShifts, isLoading: shiftsLoading } = useShiftsInRange(startISO, endISO);
-
-  // Fetch past shifts for confirmation: 90 days ago -> now
-  const [pastStartISO, pastEndISO] = useMemo(() => {
+  // Single query covering 90 days ago -> 14 days ahead (memoized to avoid infinite re-fetch loop)
+  const [rangeStartISO, rangeEndISO, nowISO] = useMemo(() => {
     const now = new Date();
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 3600000);
-    return [ninetyDaysAgo.toISOString(), now.toISOString()];
+    const twoWeeksLater = new Date(now.getTime() + 14 * 24 * 3600000);
+    return [ninetyDaysAgo.toISOString(), twoWeeksLater.toISOString(), now.toISOString()];
   }, []);
-  const { data: pastShifts, isLoading: pastLoading } = useShiftsInRange(pastStartISO, pastEndISO);
+  const { data: allShiftsRaw, isLoading: shiftsLoading } = useShiftsInRange(rangeStartISO, rangeEndISO);
 
-  const isLoading = wpLoading || shiftsLoading || pastLoading;
+  const isLoading = wpLoading || shiftsLoading;
+
+  // Derive past/upcoming splits from the single query
+  const pastShifts = useMemo(() =>
+    allShiftsRaw?.filter((s) => new Date(s.start_time).getTime() < new Date(nowISO).getTime()),
+    [allShiftsRaw, nowISO],
+  );
+  const upcomingShifts = useMemo(() =>
+    allShiftsRaw?.filter((s) => new Date(s.start_time).getTime() >= new Date(nowISO).getTime() && s.status !== 'cancelled'),
+    [allShiftsRaw, nowISO],
+  );
 
   // Compute hours this week and this month from all non-cancelled shifts
   const { hoursThisWeek, shiftsThisWeek, hoursThisMonth, shiftsThisMonth } = useMemo(() => {
-    const allShifts = [...(pastShifts ?? []), ...(upcomingShifts ?? [])];
-    // Deduplicate by ID (overlap between past and upcoming at "now")
-    const seen = new Set<string>();
-    const unique = allShifts.filter((s) => {
-      if (seen.has(s.id)) return false;
-      seen.add(s.id);
-      return s.status !== 'cancelled';
-    });
+    const allShifts = (allShiftsRaw ?? []).filter((s) => s.status !== 'cancelled');
 
     const now = new Date();
     // Start of current week (Monday)
@@ -58,22 +57,51 @@ export function DashboardPage() {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
+    // Compute overlapping hours between a shift [sStart, sEnd] and a period [pStart, pEnd]
+    const overlapHours = (sStart: number, sEnd: number, pStart: number, pEnd: number) => {
+      const overlapStart = Math.max(sStart, pStart);
+      const overlapEnd = Math.min(sEnd, pEnd);
+      return overlapEnd > overlapStart ? (overlapEnd - overlapStart) / 3600000 : 0;
+    };
+
+    const wStart = weekStart.getTime(), wEnd = weekEnd.getTime();
+    const mStart = monthStart.getTime(), mEnd = monthEnd.getTime();
+
     let hWeek = 0, sWeek = 0, hMonth = 0, sMonth = 0;
-    for (const s of unique) {
+    for (const s of allShifts) {
       const start = new Date(s.start_time).getTime();
       const end = new Date(s.end_time).getTime();
-      const hours = (end - start) / 3600000;
-      if (start >= weekStart.getTime() && start < weekEnd.getTime()) {
-        hWeek += hours;
+      const weekHours = overlapHours(start, end, wStart, wEnd);
+      if (weekHours > 0) {
+        hWeek += weekHours;
         sWeek++;
       }
-      if (start >= monthStart.getTime() && start < monthEnd.getTime()) {
-        hMonth += hours;
+      const monthHours = overlapHours(start, end, mStart, mEnd);
+      if (monthHours > 0) {
+        hMonth += monthHours;
         sMonth++;
       }
     }
     return { hoursThisWeek: hWeek, shiftsThisWeek: sWeek, hoursThisMonth: hMonth, shiftsThisMonth: sMonth };
-  }, [pastShifts, upcomingShifts]);
+  }, [allShiftsRaw]);
+
+  // This month's gross from projections API (server-computed earnings)
+  const grossThisMonth = useMemo(() => {
+    if (!projections) return 0;
+    const currentMonth = `${currentYear}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+    const entry = projections.find((p) => p.month === currentMonth);
+    return entry?.actual_gross ?? 0;
+  }, [projections, currentYear]);
+
+  // Estimate net from gross using projected annual tax rates
+  const netThisMonth = useMemo(() => {
+    if (grossThisMonth === 0) return 0;
+    const annualGross = grossThisMonth * 12;
+    const tax = calculatePortugueseTax({ grossAnnualIncomeCents: annualGross });
+    const totalDeductions = tax.irsAmount + tax.socialSecurity;
+    const deductionRate = totalDeductions / tax.grossIncome;
+    return Math.round(grossThisMonth * (1 - deductionRate));
+  }, [grossThisMonth]);
 
   const formatHours = (h: number) => {
     if (h === 0) return '0h';
@@ -140,8 +168,8 @@ export function DashboardPage() {
           </>
         ) : (
           <>
-            <StatCard title={t('dashboard.thisMonthGross')} value="---" subtitle={t('dashboard.vsLastMonth')} />
-            <StatCard title={t('dashboard.thisMonthNet')} value="---" subtitle={t('dashboard.vsLastMonth')} />
+            <StatCard title={t('dashboard.thisMonthGross')} value={formatEuros(grossThisMonth)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisMonth })} />
+            <StatCard title={t('dashboard.thisMonthNet')} value={formatEuros(netThisMonth)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisMonth })} />
             <StatCard title={t('dashboard.hoursThisWeek')} value={formatHours(hoursThisWeek)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisWeek })} />
             <StatCard title={t('dashboard.hoursThisMonth')} value={formatHours(hoursThisMonth)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisMonth })} />
           </>
@@ -149,7 +177,7 @@ export function DashboardPage() {
       </div>
 
       {/* Shifts to Confirm */}
-      {!pastLoading && unconfirmedShifts && unconfirmedShifts.length > 0 && (
+      {!shiftsLoading && unconfirmedShifts && unconfirmedShifts.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">{t('dashboard.shiftsToConfirm')} ({unconfirmedShifts.length})</h2>
           <div className="space-y-2">

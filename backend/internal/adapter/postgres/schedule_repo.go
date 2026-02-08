@@ -58,7 +58,7 @@ func (r *ScheduleRepository) ListShifts(ctx context.Context, filter schedule.Shi
 			recurrence_rule_id, original_start_time, is_recurrence_exception,
 			gcal_event_id, gcal_etag, last_synced_at, title, notes, patients_seen, outside_visits,
 			created_at, updated_at
-		FROM shifts WHERE user_id = $1 AND start_time >= $2 AND end_time <= $3 AND status != 'cancelled'`
+		FROM shifts WHERE user_id = $1 AND start_time < $3 AND end_time > $2 AND status != 'cancelled'`
 
 	args := []interface{}{filter.UserID, filter.Start, filter.End}
 	argIdx := 4

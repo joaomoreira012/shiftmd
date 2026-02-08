@@ -63,7 +63,7 @@ func (r *FinanceRepository) ListInvoices(ctx context.Context, userID uuid.UUID, 
 		SELECT id, user_id, workplace_id, period_start, period_end,
 			gross_amount_cents, withholding_rate, withholding_cents, iva_rate, iva_cents,
 			net_amount_cents, invoice_number, issued_at, paid_at, notes, created_at, updated_at
-		FROM invoices WHERE user_id = $1 AND period_start >= $2 AND period_end <= $3`
+		FROM invoices WHERE user_id = $1 AND period_start < $3 AND period_end > $2`
 
 	args := []interface{}{userID, start, end}
 	if workplaceID != nil {
@@ -124,14 +124,21 @@ func (r *FinanceRepository) GetEarningsSummary(ctx context.Context, userID uuid.
 		Period: start.Format("2006-01"),
 	}
 
-	// Get total earnings from shift_earnings for shifts in the date range
+	// Get pro-rated earnings from shift_earnings segments that overlap the date range.
+	// Each segment's amount is scaled by the fraction of the segment that falls within [start, end).
 	var totalCents int64
 	var shiftCount int
 	err := r.db.Pool.QueryRow(ctx, `
-		SELECT COALESCE(SUM(se.amount_cents), 0), COUNT(DISTINCT s.id)
+		SELECT COALESCE(SUM(
+			ROUND(se.amount_cents *
+				EXTRACT(EPOCH FROM (LEAST(se.segment_end, $3) - GREATEST(se.segment_start, $2))) /
+				NULLIF(EXTRACT(EPOCH FROM (se.segment_end - se.segment_start)), 0)
+			)
+		), 0),
+		COUNT(DISTINCT s.id)
 		FROM shift_earnings se
 		JOIN shifts s ON se.shift_id = s.id
-		WHERE s.user_id = $1 AND s.start_time >= $2 AND s.end_time <= $3 AND s.status != 'cancelled'
+		WHERE s.user_id = $1 AND se.segment_start < $3 AND se.segment_end > $2 AND s.status != 'cancelled'
 	`, userID, start, end).Scan(&totalCents, &shiftCount)
 	if err != nil {
 		return nil, err
@@ -140,15 +147,25 @@ func (r *FinanceRepository) GetEarningsSummary(ctx context.Context, userID uuid.
 	summary.GrossEarnings = money.Cents(totalCents)
 	summary.ShiftCount = shiftCount
 
-	// Get per-workplace breakdown
+	// Get pro-rated per-workplace breakdown
 	rows, err := r.db.Pool.Query(ctx, `
 		SELECT w.id, w.name, COALESCE(w.color, '#3B82F6'),
-			COALESCE(SUM(se.amount_cents), 0), COUNT(DISTINCT s.id),
-			COALESCE(SUM(se.hours), 0)
+			COALESCE(SUM(
+				ROUND(se.amount_cents *
+					EXTRACT(EPOCH FROM (LEAST(se.segment_end, $3) - GREATEST(se.segment_start, $2))) /
+					NULLIF(EXTRACT(EPOCH FROM (se.segment_end - se.segment_start)), 0)
+				)
+			), 0),
+			COUNT(DISTINCT s.id),
+			COALESCE(SUM(
+				se.hours *
+				EXTRACT(EPOCH FROM (LEAST(se.segment_end, $3) - GREATEST(se.segment_start, $2))) /
+				NULLIF(EXTRACT(EPOCH FROM (se.segment_end - se.segment_start)), 0)
+			), 0)
 		FROM shifts s
 		JOIN workplaces w ON s.workplace_id = w.id
-		LEFT JOIN shift_earnings se ON se.shift_id = s.id
-		WHERE s.user_id = $1 AND s.start_time >= $2 AND s.end_time <= $3 AND s.status != 'cancelled'
+		LEFT JOIN shift_earnings se ON se.shift_id = s.id AND se.segment_start < $3 AND se.segment_end > $2
+		WHERE s.user_id = $1 AND s.start_time < $3 AND s.end_time > $2 AND s.status != 'cancelled'
 		GROUP BY w.id, w.name, w.color
 		ORDER BY SUM(se.amount_cents) DESC
 	`, userID, start, end)
