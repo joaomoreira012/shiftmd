@@ -92,6 +92,7 @@ export function WorkplaceEarningsPage() {
               workplace={workplace}
               months={months}
               monthNames={monthNames}
+              year={year}
             />
           ))}
         </div>
@@ -104,12 +105,15 @@ function WorkplaceCard({
   workplace,
   months,
   monthNames,
+  year,
 }: {
   workplace: Workplace;
   months: Map<number, WorkplaceEarnings>;
   monthNames: string[];
+  year: number;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const euroLocale = i18n.language === 'pt' ? 'pt-PT' : 'en-US';
   const rate = workplace.withholding_rate;
   const isMonthly = workplace.pay_model === 'monthly';
   const showConsult = workplace.has_consultation_pay;
@@ -142,6 +146,9 @@ function WorkplaceCard({
           style={{ backgroundColor: workplace.color || '#6B7280' }}
         />
         <h2 className="text-lg font-semibold">{workplace.name}</h2>
+        <span className="text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">
+          {workplace.pay_model === 'monthly' ? t('workplaces.perMonthShort') : workplace.pay_model === 'per_turn' ? t('workplaces.perTurnShort') : t('workplaces.perHourShort')}
+        </span>
         <span className="text-xs text-gray-400 ml-auto">
           {t('finance.withholding')}: {(rate * 100).toFixed(1)}%
         </span>
@@ -157,8 +164,9 @@ function WorkplaceCard({
               {showVisits && <th className="text-right py-2 text-gray-500 font-medium">{t('finance.outsideVisits')}</th>}
               <th className="text-right py-2 text-gray-500 font-medium">{t('finance.gross')}</th>
               <th className="text-right py-2 text-gray-500 font-medium">{t('finance.net')}</th>
-              <th className="text-right py-2 text-gray-500 font-medium">{t('finance.grossPerHour')}</th>
-              <th className="text-right py-2 text-gray-500 font-medium">{t('finance.netPerHour')}</th>
+              <th className="text-right py-2 text-gray-500 font-medium hidden md:table-cell">{t('finance.grossPerHour')}</th>
+              <th className="text-right py-2 text-gray-500 font-medium hidden md:table-cell">{t('finance.netPerHour')}</th>
+              <th className="text-right py-2 w-8"></th>
             </tr>
           </thead>
           <tbody>
@@ -166,7 +174,7 @@ function WorkplaceCard({
               const m = months.get(i);
               if (!m || m.gross === 0) {
                 return (
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50 opacity-40">
                     <td className="py-2 font-medium capitalize">{name}</td>
                     <td className="text-right py-2">{dash}</td>
                     <td className="text-right py-2">{dash}</td>
@@ -174,8 +182,9 @@ function WorkplaceCard({
                     {showVisits && <td className="text-right py-2">{dash}</td>}
                     <td className="text-right py-2">{dash}</td>
                     <td className="text-right py-2">{dash}</td>
-                    <td className="text-right py-2">{dash}</td>
-                    <td className="text-right py-2">{dash}</td>
+                    <td className="text-right py-2 hidden md:table-cell">{dash}</td>
+                    <td className="text-right py-2 hidden md:table-cell">{dash}</td>
+                    <td></td>
                   </tr>
                 );
               }
@@ -190,29 +199,38 @@ function WorkplaceCard({
                   <td className="text-right py-2">{m.hours.toFixed(1)}</td>
                   {showConsult && <td className="text-right py-2">{m.patients_seen || dash}</td>}
                   {showVisits && <td className="text-right py-2">{m.outside_visits || dash}</td>}
-                  <td className="text-right py-2 font-medium">{formatEuros(gross)}</td>
-                  <td className="text-right py-2 text-emerald-600 dark:text-emerald-400">{formatEuros(net)}</td>
-                  <td className="text-right py-2 text-gray-500">{formatEuros(grossPerHour)}</td>
-                  <td className="text-right py-2 text-gray-500">{formatEuros(netPerHour)}</td>
+                  <td className="text-right py-2 font-medium">{formatEuros(gross, euroLocale)}</td>
+                  <td className="text-right py-2 text-emerald-600 dark:text-emerald-400">{formatEuros(net, euroLocale)}</td>
+                  <td className="text-right py-2 text-gray-500 hidden md:table-cell">{formatEuros(grossPerHour, euroLocale)}</td>
+                  <td className="text-right py-2 text-gray-500 hidden md:table-cell">{formatEuros(netPerHour, euroLocale)}</td>
+                  <td className="text-right py-2 pl-2">
+                    <Link
+                      to={`/finance?invoice=new&workplace=${workplace.id}&month=${i + 1}&year=${year}`}
+                      className="text-xs text-primary-500 hover:text-primary-600 whitespace-nowrap"
+                    >
+                      {t('finance.newInvoice')}
+                    </Link>
+                  </td>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-gray-300 dark:border-gray-700 font-semibold">
+            <tr className="border-t-2 border-gray-300 dark:border-gray-700 font-semibold bg-gray-50 dark:bg-gray-800/50">
               <td className="py-2">{t('finance.total')}</td>
               <td className="text-right py-2">{totalShifts}</td>
               <td className="text-right py-2">{totalHours.toFixed(1)}</td>
               {showConsult && <td className="text-right py-2">{totalPatients}</td>}
               {showVisits && <td className="text-right py-2">{totalVisits}</td>}
-              <td className="text-right py-2">{formatEuros(totalGross)}</td>
-              <td className="text-right py-2 text-emerald-600 dark:text-emerald-400">{formatEuros(totalNet)}</td>
-              <td className="text-right py-2 text-gray-500">
-                {totalHours > 0 ? formatEuros(Math.round(totalGross / totalHours)) : '-'}
+              <td className="text-right py-2">{formatEuros(totalGross, euroLocale)}</td>
+              <td className="text-right py-2 text-emerald-600 dark:text-emerald-400">{formatEuros(totalNet, euroLocale)}</td>
+              <td className="text-right py-2 text-gray-500 hidden md:table-cell">
+                {totalHours > 0 ? formatEuros(Math.round(totalGross / totalHours), euroLocale) : '-'}
               </td>
-              <td className="text-right py-2 text-gray-500">
-                {totalHours > 0 ? formatEuros(Math.round(totalNet / totalHours)) : '-'}
+              <td className="text-right py-2 text-gray-500 hidden md:table-cell">
+                {totalHours > 0 ? formatEuros(Math.round(totalNet / totalHours), euroLocale) : '-'}
               </td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
