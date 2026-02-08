@@ -209,7 +209,7 @@ func (m *mockWorkplaceRepo) ReorderPricingRules(_ context.Context, _ uuid.UUID, 
 func newTestScheduleService() (*Service, *mockScheduleRepo, *mockWorkplaceRepo) {
 	schedRepo := newMockScheduleRepo()
 	wpRepo := newMockWorkplaceRepo()
-	svc := NewService(schedRepo, wpRepo)
+	svc := NewService(schedRepo, wpRepo, nil)
 	return svc, schedRepo, wpRepo
 }
 

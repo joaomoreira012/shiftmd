@@ -53,9 +53,13 @@ func main() {
 	// Services
 	authService := auth.NewService(authRepo, cfg.JWT)
 	workplaceService := workplace.NewService(workplaceRepo)
-	scheduleService := schedule.NewService(scheduleRepo, workplaceRepo)
-	financeService := finance.NewService(financeRepo, workplaceRepo, scheduleRepo)
 	gcalService := gcal.NewService(cfg.Google, authRepo, gcalSyncRepo)
+	var calSyncer schedule.CalendarSyncer
+	if gcalService.Enabled() {
+		calSyncer = gcalService
+	}
+	scheduleService := schedule.NewService(scheduleRepo, workplaceRepo, calSyncer)
+	financeService := finance.NewService(financeRepo, workplaceRepo, scheduleRepo)
 
 	// HTTP Server
 	router := httpAdapter.NewServer(cfg, authService, workplaceService, scheduleService, financeService, gcalService, scheduleRepo)

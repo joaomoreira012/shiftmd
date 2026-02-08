@@ -51,7 +51,7 @@ func NewService(cfg config.GoogleConfig, authRepo auth.Repository, syncRepo Sync
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		RedirectURL:  cfg.RedirectURL,
-		Scopes:       []string{calendar.CalendarEventsScope},
+		Scopes:       []string{calendar.CalendarScope},
 		Endpoint:     google.Endpoint,
 	}
 
@@ -83,9 +83,26 @@ func (s *Service) HandleCallback(ctx context.Context, userID uuid.UUID, code str
 	user.GCalRefreshToken = &token.RefreshToken
 	user.GCalTokenExpiry = &token.Expiry
 
-	// Default to primary calendar
-	primary := "primary"
-	user.GCalCalendarID = &primary
+	// Create a dedicated ShiftMD calendar
+	calSvc, calErr := s.getCalendarService(ctx, user)
+	if calErr == nil {
+		newCal, insertErr := calSvc.Calendars.Insert(&calendar.Calendar{
+			Summary:     "ShiftMD",
+			Description: "Shifts managed by ShiftMD",
+			TimeZone:    "Europe/Lisbon",
+		}).Context(ctx).Do()
+		if insertErr == nil {
+			user.GCalCalendarID = &newCal.Id
+		} else {
+			slog.Warn("failed to create ShiftMD calendar, falling back to primary", "error", insertErr)
+			primary := "primary"
+			user.GCalCalendarID = &primary
+		}
+	} else {
+		slog.Warn("failed to get calendar service, falling back to primary", "error", calErr)
+		primary := "primary"
+		user.GCalCalendarID = &primary
+	}
 
 	if err := s.authRepo.UpdateUser(ctx, user); err != nil {
 		return fmt.Errorf("saving oauth tokens: %w", err)
@@ -108,6 +125,16 @@ func (s *Service) Disconnect(ctx context.Context, userID uuid.UUID) error {
 	user, err := s.authRepo.GetUserByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("getting user: %w", err)
+	}
+
+	// Delete the dedicated ShiftMD calendar (if not "primary")
+	if user.GCalCalendarID != nil && *user.GCalCalendarID != "primary" {
+		calSvc, calErr := s.getCalendarService(ctx, user)
+		if calErr == nil {
+			if delErr := calSvc.Calendars.Delete(*user.GCalCalendarID).Context(ctx).Do(); delErr != nil {
+				slog.Warn("failed to delete ShiftMD calendar", "calendar_id", *user.GCalCalendarID, "error", delErr)
+			}
+		}
 	}
 
 	user.GCalAccessToken = nil

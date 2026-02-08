@@ -225,6 +225,71 @@ func shiftToEvent(shift *schedule.Shift) *calendar.Event {
 	return event
 }
 
+// SyncShift creates or updates a single Google Calendar event for a shift.
+// On success it sets shift.GCalEventID, GCalEtag, and LastSyncedAt in place.
+func (s *Service) SyncShift(ctx context.Context, userID uuid.UUID, shift *schedule.Shift) error {
+	user, err := s.authRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("getting user: %w", err)
+	}
+
+	calSvc, err := s.getCalendarService(ctx, user)
+	if err != nil {
+		return fmt.Errorf("creating calendar service: %w", err)
+	}
+
+	calendarID := "primary"
+	if user.GCalCalendarID != nil {
+		calendarID = *user.GCalCalendarID
+	}
+
+	event := shiftToEvent(shift)
+
+	if shift.GCalEventID != nil && *shift.GCalEventID != "" {
+		updated, err := calSvc.Events.Update(calendarID, *shift.GCalEventID, event).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("updating gcal event: %w", err)
+		}
+		shift.GCalEventID = &updated.Id
+		shift.GCalEtag = &updated.Etag
+	} else {
+		created, err := calSvc.Events.Insert(calendarID, event).Context(ctx).Do()
+		if err != nil {
+			return fmt.Errorf("inserting gcal event: %w", err)
+		}
+		shift.GCalEventID = &created.Id
+		shift.GCalEtag = &created.Etag
+	}
+
+	now := time.Now()
+	shift.LastSyncedAt = &now
+	return nil
+}
+
+// RemoveShift deletes the Google Calendar event associated with a shift.
+func (s *Service) RemoveShift(ctx context.Context, userID uuid.UUID, shift *schedule.Shift) error {
+	if shift.GCalEventID == nil {
+		return nil
+	}
+
+	user, err := s.authRepo.GetUserByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("getting user: %w", err)
+	}
+
+	calSvc, err := s.getCalendarService(ctx, user)
+	if err != nil {
+		return fmt.Errorf("creating calendar service: %w", err)
+	}
+
+	calendarID := "primary"
+	if user.GCalCalendarID != nil {
+		calendarID = *user.GCalCalendarID
+	}
+
+	return calSvc.Events.Delete(calendarID, *shift.GCalEventID).Context(ctx).Do()
+}
+
 func stringVal(s *string) string {
 	if s == nil {
 		return ""

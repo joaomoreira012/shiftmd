@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,13 +16,20 @@ var (
 	ErrInvalidTimeRange   = errors.New("end time must be after start time")
 )
 
-type Service struct {
-	repo          Repository
-	workplaceRepo workplace.Repository
+// CalendarSyncer pushes shift changes to an external calendar (e.g. Google Calendar).
+type CalendarSyncer interface {
+	SyncShift(ctx context.Context, userID uuid.UUID, shift *Shift) error
+	RemoveShift(ctx context.Context, userID uuid.UUID, shift *Shift) error
 }
 
-func NewService(repo Repository, workplaceRepo workplace.Repository) *Service {
-	return &Service{repo: repo, workplaceRepo: workplaceRepo}
+type Service struct {
+	repo           Repository
+	workplaceRepo  workplace.Repository
+	calendarSyncer CalendarSyncer
+}
+
+func NewService(repo Repository, workplaceRepo workplace.Repository, calendarSyncer CalendarSyncer) *Service {
+	return &Service{repo: repo, workplaceRepo: workplaceRepo, calendarSyncer: calendarSyncer}
 }
 
 func (s *Service) CreateShift(ctx context.Context, userID uuid.UUID, input CreateShiftInput) (*Shift, error) {
@@ -58,6 +66,8 @@ func (s *Service) CreateShift(ctx context.Context, userID uuid.UUID, input Creat
 	if err := s.calculateAndStoreEarnings(ctx, shift); err != nil {
 		return nil, err
 	}
+
+	s.syncToCalendar(ctx, shift)
 
 	return shift, nil
 }
@@ -136,11 +146,51 @@ func (s *Service) UpdateShift(ctx context.Context, id uuid.UUID, input UpdateShi
 		}
 	}
 
+	if shift.Status == ShiftStatusCancelled {
+		s.removeFromCalendar(ctx, shift)
+	} else {
+		s.syncToCalendar(ctx, shift)
+	}
+
 	return shift, nil
 }
 
 func (s *Service) DeleteShift(ctx context.Context, id uuid.UUID) error {
-	return s.repo.DeleteShift(ctx, id)
+	shift, err := s.repo.GetShiftByID(ctx, id)
+	if err != nil {
+		return ErrShiftNotFound
+	}
+
+	if err := s.repo.DeleteShift(ctx, id); err != nil {
+		return err
+	}
+
+	s.removeFromCalendar(ctx, shift)
+
+	return nil
+}
+
+func (s *Service) syncToCalendar(ctx context.Context, shift *Shift) {
+	if s.calendarSyncer == nil {
+		return
+	}
+	if err := s.calendarSyncer.SyncShift(ctx, shift.UserID, shift); err != nil {
+		slog.Warn("gcal sync failed", "shift_id", shift.ID, "error", err)
+		return
+	}
+	// Persist gcal fields (event ID, etag, last_synced_at) set by SyncShift
+	if err := s.repo.UpdateShift(ctx, shift); err != nil {
+		slog.Warn("failed to persist gcal fields after sync", "shift_id", shift.ID, "error", err)
+	}
+}
+
+func (s *Service) removeFromCalendar(ctx context.Context, shift *Shift) {
+	if s.calendarSyncer == nil || shift.GCalEventID == nil {
+		return
+	}
+	if err := s.calendarSyncer.RemoveShift(ctx, shift.UserID, shift); err != nil {
+		slog.Warn("gcal delete failed", "shift_id", shift.ID, "error", err)
+	}
 }
 
 func (s *Service) calculateAndStoreEarnings(ctx context.Context, shift *Shift) error {
