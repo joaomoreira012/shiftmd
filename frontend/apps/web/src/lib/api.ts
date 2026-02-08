@@ -37,6 +37,7 @@ export const {
   useFinanceSummary,
   useMonthlySummary,
   useYearlySummary,
+  useMonthlyBreakdown,
   useProjections,
   useTaxEstimate,
   useInvoices,

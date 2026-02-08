@@ -1,0 +1,1 @@
+ALTER TABLE workplaces ADD COLUMN withholding_rate NUMERIC(5,4) NOT NULL DEFAULT 0.25;

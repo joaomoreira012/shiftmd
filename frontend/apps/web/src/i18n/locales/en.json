@@ -83,6 +83,7 @@
     "perHourShort": "per hour",
     "perTurnShort": "per turn",
     "perMonthShort": "per month",
+    "withholdingRate": "IRS Withholding Rate",
     "hasConsultationPay": "Also pays per consultation",
     "consultationPayEnabled": "Consultation pay",
     "hasOutsideVisitPay": "Also pays per outside visit",
@@ -160,7 +161,18 @@
     "projected": "Projected",
     "diff": "Diff",
     "actualLabel": "actual",
-    "workplace": "Workplace"
+    "workplace": "Workplace",
+    "workplaceEarnings": "Workplace Earnings",
+    "workplaceEarningsDesc": "Monthly earnings breakdown per workplace for invoicing.",
+    "shifts": "Shifts",
+    "hours": "Hours",
+    "grossPerHour": "Gross/h",
+    "netPerHour": "Net/h",
+    "total": "Total",
+    "consultations": "Consult.",
+    "outsideVisits": "Visits",
+    "noEarnings": "No earnings data for {{year}}. Complete shifts to see the breakdown.",
+    "viewEarnings": "Workplace Earnings"
   },
   "settings": {
     "title": "Settings",

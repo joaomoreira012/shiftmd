@@ -40,6 +40,7 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
           monthly_expected_hours: workplace.monthly_expected_hours,
           has_consultation_pay: workplace.has_consultation_pay,
           has_outside_visit_pay: workplace.has_outside_visit_pay,
+          withholding_rate: workplace.withholding_rate,
           contact_name: workplace.contact_name || '',
           contact_phone: workplace.contact_phone || '',
           contact_email: workplace.contact_email || '',
@@ -53,6 +54,7 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
           currency: 'EUR',
           has_consultation_pay: false,
           has_outside_visit_pay: false,
+          withholding_rate: 0.25,
         },
   });
 
@@ -177,6 +179,24 @@ export function WorkplaceFormModal({ workplace, onClose, onSuccess }: Props) {
               />
             </div>
           )}
+
+          {/* Withholding Rate */}
+          <div>
+            <label className="block text-sm font-medium mb-1">{t('workplaces.withholdingRate')}</label>
+            <div className="relative">
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                className="w-full px-3 py-2 pr-8 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                value={Math.round(watch('withholding_rate') * 1000) / 10}
+                onChange={(e) => setValue('withholding_rate', (parseFloat(e.target.value) || 0) / 100)}
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+            </div>
+            {errors.withholding_rate && <p className="text-red-500 text-xs mt-1">{errors.withholding_rate.message}</p>}
+          </div>
 
           {/* Consultation Pay Toggle */}
           <div>

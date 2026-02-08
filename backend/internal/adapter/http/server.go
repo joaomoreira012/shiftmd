@@ -95,6 +95,7 @@ func NewServer(
 			r.Get("/finance/summary", financeHandler.GetSummary)
 			r.Get("/finance/summary/monthly/{year}/{month}", financeHandler.GetMonthlySummary)
 			r.Get("/finance/summary/yearly/{year}", financeHandler.GetYearlySummary)
+			r.Get("/finance/monthly-breakdown/{year}", financeHandler.GetMonthlyBreakdown)
 			r.Get("/finance/projections", financeHandler.GetProjections)
 			r.Get("/finance/tax-estimate/{year}", financeHandler.GetTaxEstimate)
 

@@ -8,6 +8,7 @@ export const financeKeys = {
   summary: (start?: string, end?: string) => ['finance', 'summary', { start, end }] as const,
   monthly: (year: number, month: number) => ['finance', 'monthly', year, month] as const,
   yearly: (year: number) => ['finance', 'yearly', year] as const,
+  monthlyBreakdown: (year: number) => ['finance', 'monthly-breakdown', year] as const,
   projections: (year?: number) => ['finance', 'projections', year] as const,
   taxEstimate: (year: number) => ['finance', 'tax-estimate', year] as const,
   invoices: (params?: { workplace_id?: string; start?: string; end?: string }) =>
@@ -45,6 +46,17 @@ export function createFinanceHooks(client: KyInstance) {
       queryKey: financeKeys.yearly(year),
       queryFn: async () => {
         const res = await api.getYearlySummary(year);
+        return res.data!;
+      },
+      staleTime: 1000 * 60 * 5,
+    });
+  }
+
+  function useMonthlyBreakdown(year: number) {
+    return useQuery({
+      queryKey: financeKeys.monthlyBreakdown(year),
+      queryFn: async () => {
+        const res = await api.getMonthlyBreakdown(year);
         return res.data!;
       },
       staleTime: 1000 * 60 * 5,
@@ -113,6 +125,7 @@ export function createFinanceHooks(client: KyInstance) {
     useFinanceSummary,
     useMonthlySummary,
     useYearlySummary,
+    useMonthlyBreakdown,
     useProjections,
     useTaxEstimate,
     useInvoices,

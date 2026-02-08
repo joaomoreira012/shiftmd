@@ -14,6 +14,8 @@ export interface WorkplaceEarnings {
   gross: number;
   shift_count: number;
   hours: number;
+  patients_seen: number;
+  outside_visits: number;
 }
 
 export interface TaxEstimate {

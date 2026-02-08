@@ -12,6 +12,7 @@ export const createWorkplaceSchema = z.object({
   monthly_expected_hours: z.number().positive().optional(),
   has_consultation_pay: z.boolean(),
   has_outside_visit_pay: z.boolean(),
+  withholding_rate: z.number().min(0).max(1),
   contact_name: z.string().max(255).optional(),
   contact_phone: z.string().max(50).optional(),
   contact_email: z.union([z.string().email(), z.literal('')]).optional(),

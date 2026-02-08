@@ -49,6 +49,8 @@ type WorkplaceEarnings struct {
 	Gross         money.Cents `json:"gross"`
 	ShiftCount    int         `json:"shift_count"`
 	Hours         float64     `json:"hours"`
+	PatientsSeen  int         `json:"patients_seen"`
+	OutsideVisits int         `json:"outside_visits"`
 }
 
 type TaxEstimate struct {
@@ -73,28 +75,28 @@ type TaxEstimate struct {
 }
 
 type BracketDetail struct {
-	BracketLabel    string      `json:"bracket_label"`
-	TaxableInBrack  money.Cents `json:"taxable_in_bracket"`
-	Rate            float64     `json:"rate"`
-	TaxAmount       money.Cents `json:"tax_amount"`
+	BracketLabel   string      `json:"bracket_label"`
+	TaxableInBrack money.Cents `json:"taxable_in_bracket"`
+	Rate           float64     `json:"rate"`
+	TaxAmount      money.Cents `json:"tax_amount"`
 }
 
 type Projection struct {
-	Month             string      `json:"month"` // YYYY-MM
-	ProjectedGross    money.Cents `json:"projected_gross"`
-	ActualGross       money.Cents `json:"actual_gross"`
-	Difference        money.Cents `json:"difference"`
-	IsActual          bool        `json:"is_actual"` // true if month has passed
+	Month          string      `json:"month"` // YYYY-MM
+	ProjectedGross money.Cents `json:"projected_gross"`
+	ActualGross    money.Cents `json:"actual_gross"`
+	Difference     money.Cents `json:"difference"`
+	IsActual       bool        `json:"is_actual"` // true if month has passed
 }
 
 type CreateInvoiceInput struct {
-	WorkplaceID      uuid.UUID `json:"workplace_id" validate:"required"`
-	PeriodStart      time.Time `json:"period_start" validate:"required"`
-	PeriodEnd        time.Time `json:"period_end" validate:"required"`
-	GrossAmountCents int64     `json:"gross_amount_cents" validate:"required,min=0"`
-	WithholdingRate  float64   `json:"withholding_rate" validate:"min=0,max=1"`
-	IVARate          float64   `json:"iva_rate" validate:"min=0,max=1"`
-	InvoiceNumber    *string   `json:"invoice_number"`
+	WorkplaceID      uuid.UUID  `json:"workplace_id" validate:"required"`
+	PeriodStart      time.Time  `json:"period_start" validate:"required"`
+	PeriodEnd        time.Time  `json:"period_end" validate:"required"`
+	GrossAmountCents int64      `json:"gross_amount_cents" validate:"required,min=0"`
+	WithholdingRate  float64    `json:"withholding_rate" validate:"min=0,max=1"`
+	IVARate          float64    `json:"iva_rate" validate:"min=0,max=1"`
+	InvoiceNumber    *string    `json:"invoice_number"`
 	IssuedAt         *time.Time `json:"issued_at"`
-	Notes            *string   `json:"notes"`
+	Notes            *string    `json:"notes"`
 }

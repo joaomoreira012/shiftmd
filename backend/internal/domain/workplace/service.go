@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	ErrWorkplaceNotFound    = errors.New("workplace not found")
-	ErrPricingRuleNotFound  = errors.New("pricing rule not found")
-	ErrDuplicatePriority    = errors.New("pricing rule with this priority already exists")
-	ErrInvalidRateConfig    = errors.New("must set either rate_cents or rate_multiplier, not both")
+	ErrWorkplaceNotFound   = errors.New("workplace not found")
+	ErrPricingRuleNotFound = errors.New("pricing rule not found")
+	ErrDuplicatePriority   = errors.New("pricing rule with this priority already exists")
+	ErrInvalidRateConfig   = errors.New("must set either rate_cents or rate_multiplier, not both")
 )
 
 type Service struct {
@@ -33,6 +33,10 @@ func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input C
 	if input.HasOutsideVisitPay != nil {
 		hasOutsideVisitPay = *input.HasOutsideVisitPay
 	}
+	withholdingRate := 0.25
+	if input.WithholdingRate != nil {
+		withholdingRate = *input.WithholdingRate
+	}
 
 	w := &Workplace{
 		ID:                   uuid.New(),
@@ -46,6 +50,7 @@ func (s *Service) CreateWorkplace(ctx context.Context, userID uuid.UUID, input C
 		MonthlyExpectedHours: input.MonthlyExpectedHours,
 		HasConsultationPay:   hasConsultationPay,
 		HasOutsideVisitPay:   hasOutsideVisitPay,
+		WithholdingRate:      withholdingRate,
 		ContactName:          input.ContactName,
 		ContactPhone:         input.ContactPhone,
 		ContactEmail:         input.ContactEmail,
@@ -102,6 +107,9 @@ func (s *Service) UpdateWorkplace(ctx context.Context, id uuid.UUID, input Updat
 	}
 	if input.HasOutsideVisitPay != nil {
 		w.HasOutsideVisitPay = *input.HasOutsideVisitPay
+	}
+	if input.WithholdingRate != nil {
+		w.WithholdingRate = *input.WithholdingRate
 	}
 	if input.ContactName != nil {
 		w.ContactName = input.ContactName

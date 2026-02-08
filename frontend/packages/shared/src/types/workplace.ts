@@ -14,6 +14,7 @@ export interface Workplace {
   monthly_expected_hours?: number;
   has_consultation_pay: boolean;
   has_outside_visit_pay: boolean;
+  withholding_rate: number;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -51,6 +52,7 @@ export interface CreateWorkplaceInput {
   monthly_expected_hours?: number;
   has_consultation_pay?: boolean;
   has_outside_visit_pay?: boolean;
+  withholding_rate?: number;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;
@@ -66,6 +68,7 @@ export interface UpdateWorkplaceInput {
   monthly_expected_hours?: number;
   has_consultation_pay?: boolean;
   has_outside_visit_pay?: boolean;
+  withholding_rate?: number;
   contact_name?: string;
   contact_phone?: string;
   contact_email?: string;

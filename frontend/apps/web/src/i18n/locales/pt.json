@@ -83,6 +83,7 @@
     "perHourShort": "por hora",
     "perTurnShort": "por turno",
     "perMonthShort": "por mes",
+    "withholdingRate": "Taxa de Retencao IRS",
     "hasConsultationPay": "Tambem paga por consulta",
     "consultationPayEnabled": "Pagamento por consulta",
     "hasOutsideVisitPay": "Tambem paga por visita domiciliaria",
@@ -160,7 +161,18 @@
     "projected": "Projetado",
     "diff": "Dif",
     "actualLabel": "real",
-    "workplace": "Local"
+    "workplace": "Local",
+    "workplaceEarnings": "Ganhos por Local",
+    "workplaceEarningsDesc": "Resumo mensal de ganhos por local para faturacao.",
+    "shifts": "Turnos",
+    "hours": "Horas",
+    "grossPerHour": "Bruto/h",
+    "netPerHour": "Liq/h",
+    "total": "Total",
+    "consultations": "Consult.",
+    "outsideVisits": "Visitas",
+    "noEarnings": "Sem dados de ganhos para {{year}}. Complete turnos para ver o resumo.",
+    "viewEarnings": "Ganhos por Local"
   },
   "settings": {
     "title": "Definicoes",

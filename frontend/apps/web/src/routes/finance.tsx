@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { useYearlySummary, useProjections, useWorkplaces } from '../lib/api';
 import { formatEuros } from '@doctor-tracker/shared/utils/currency';
 import { calculatePortugueseTax } from '@doctor-tracker/shared/utils/tax';
@@ -34,6 +35,12 @@ export function FinancePage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">{t('finance.title')}</h1>
         <div className="flex items-center gap-3">
+          <Link
+            to="/finance/earnings"
+            className="px-3 py-1.5 text-sm font-medium text-primary-600 hover:text-primary-700 border border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950 rounded-lg transition-colors"
+          >
+            {t('finance.viewEarnings')}
+          </Link>
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}

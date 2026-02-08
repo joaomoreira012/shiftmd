@@ -86,6 +86,24 @@ func (h *FinanceHandler) GetYearlySummary(w http.ResponseWriter, r *http.Request
 	dto.JSON(w, http.StatusOK, summary)
 }
 
+func (h *FinanceHandler) GetMonthlyBreakdown(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	year, _ := strconv.Atoi(chi.URLParam(r, "year"))
+
+	if year == 0 {
+		dto.Error(w, http.StatusBadRequest, "invalid year")
+		return
+	}
+
+	breakdown, err := h.service.GetMonthlyBreakdown(r.Context(), userID, year)
+	if err != nil {
+		dto.Error(w, http.StatusInternalServerError, "failed to get monthly breakdown")
+		return
+	}
+
+	dto.JSON(w, http.StatusOK, breakdown)
+}
+
 func (h *FinanceHandler) GetProjections(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 	year := time.Now().Year()

@@ -17,6 +17,9 @@ export function createFinanceApi(client: KyInstance) {
     getYearlySummary: (year: number) =>
       client.get(`api/v1/finance/summary/yearly/${year}`).json<ApiResponse<EarningsSummary>>(),
 
+    getMonthlyBreakdown: (year: number) =>
+      client.get(`api/v1/finance/monthly-breakdown/${year}`).json<ApiResponse<EarningsSummary[]>>(),
+
     getProjections: (year?: number) => {
       const searchParams: Record<string, string> = {};
       if (year) searchParams.year = String(year);

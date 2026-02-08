@@ -45,6 +45,7 @@ type Workplace struct {
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours,omitempty"`
 	HasConsultationPay   bool     `json:"has_consultation_pay"`
 	HasOutsideVisitPay   bool     `json:"has_outside_visit_pay"`
+	WithholdingRate      float64  `json:"withholding_rate"`
 
 	ContactName  *string `json:"contact_name,omitempty"`
 	ContactPhone *string `json:"contact_phone,omitempty"`
@@ -63,15 +64,15 @@ type PricingRule struct {
 	Name     string `json:"name"`
 	Priority int    `json:"priority"`
 
-	TimeStart *string     `json:"time_start,omitempty"` // HH:MM format
-	TimeEnd   *string     `json:"time_end,omitempty"`   // HH:MM format
-	DaysOfWeek []DayOfWeek `json:"days_of_week,omitempty"`
-	SpecificDates []string `json:"specific_dates,omitempty"` // YYYY-MM-DD format
+	TimeStart     *string     `json:"time_start,omitempty"` // HH:MM format
+	TimeEnd       *string     `json:"time_end,omitempty"`   // HH:MM format
+	DaysOfWeek    []DayOfWeek `json:"days_of_week,omitempty"`
+	SpecificDates []string    `json:"specific_dates,omitempty"` // YYYY-MM-DD format
 
-	RateCents              *money.Cents `json:"rate_cents,omitempty"`
-	RateMultiplier         *float64     `json:"rate_multiplier,omitempty"`
-	ConsultationRateCents  *money.Cents `json:"consultation_rate_cents,omitempty"`
-	OutsideVisitRateCents  *money.Cents `json:"outside_visit_rate_cents,omitempty"`
+	RateCents             *money.Cents `json:"rate_cents,omitempty"`
+	RateMultiplier        *float64     `json:"rate_multiplier,omitempty"`
+	ConsultationRateCents *money.Cents `json:"consultation_rate_cents,omitempty"`
+	OutsideVisitRateCents *money.Cents `json:"outside_visit_rate_cents,omitempty"`
 
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -88,6 +89,7 @@ type CreateWorkplaceInput struct {
 	MonthlyExpectedHours *float64 `json:"monthly_expected_hours"`
 	HasConsultationPay   *bool    `json:"has_consultation_pay"`
 	HasOutsideVisitPay   *bool    `json:"has_outside_visit_pay"`
+	WithholdingRate      *float64 `json:"withholding_rate"`
 	ContactName          *string  `json:"contact_name"`
 	ContactPhone         *string  `json:"contact_phone"`
 	ContactEmail         *string  `json:"contact_email"`
@@ -103,6 +105,7 @@ type UpdateWorkplaceInput struct {
 	MonthlyExpectedHours *float64  `json:"monthly_expected_hours"`
 	HasConsultationPay   *bool     `json:"has_consultation_pay"`
 	HasOutsideVisitPay   *bool     `json:"has_outside_visit_pay"`
+	WithholdingRate      *float64  `json:"withholding_rate"`
 	ContactName          *string   `json:"contact_name"`
 	ContactPhone         *string   `json:"contact_phone"`
 	ContactEmail         *string   `json:"contact_email"`

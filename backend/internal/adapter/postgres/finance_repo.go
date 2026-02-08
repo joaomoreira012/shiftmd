@@ -161,7 +161,13 @@ func (r *FinanceRepository) GetEarningsSummary(ctx context.Context, userID uuid.
 				se.hours *
 				EXTRACT(EPOCH FROM (LEAST(se.segment_end, $3) - GREATEST(se.segment_start, $2))) /
 				NULLIF(EXTRACT(EPOCH FROM (se.segment_end - se.segment_start)), 0)
-			), 0)
+			), 0),
+			COALESCE((SELECT SUM(COALESCE(ss.patients_seen, 0)) FROM shifts ss
+				WHERE ss.workplace_id = w.id AND ss.user_id = $1
+				AND ss.start_time < $3 AND ss.end_time > $2 AND ss.status != 'cancelled'), 0),
+			COALESCE((SELECT SUM(COALESCE(ss.outside_visits, 0)) FROM shifts ss
+				WHERE ss.workplace_id = w.id AND ss.user_id = $1
+				AND ss.start_time < $3 AND ss.end_time > $2 AND ss.status != 'cancelled'), 0)
 		FROM shifts s
 		JOIN workplaces w ON s.workplace_id = w.id
 		LEFT JOIN shift_earnings se ON se.shift_id = s.id AND se.segment_start < $3 AND se.segment_end > $2
@@ -178,7 +184,7 @@ func (r *FinanceRepository) GetEarningsSummary(ctx context.Context, userID uuid.
 		var we finance.WorkplaceEarnings
 		var grossCents int64
 		if err := rows.Scan(&we.WorkplaceID, &we.WorkplaceName, &we.Color,
-			&grossCents, &we.ShiftCount, &we.Hours); err != nil {
+			&grossCents, &we.ShiftCount, &we.Hours, &we.PatientsSeen, &we.OutsideVisits); err != nil {
 			return nil, err
 		}
 		we.Gross = money.Cents(grossCents)

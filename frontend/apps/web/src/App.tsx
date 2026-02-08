@@ -7,6 +7,7 @@ import { CalendarPage } from './routes/calendar';
 import { WorkplacesPage } from './routes/workplaces';
 import { WorkplaceDetailPage } from './routes/workplace-detail';
 import { FinancePage } from './routes/finance';
+import { WorkplaceEarningsPage } from './routes/workplace-earnings';
 import { SettingsPage } from './routes/settings';
 
 export function App() {
@@ -26,6 +27,7 @@ export function App() {
         <Route path="/workplaces" element={<WorkplacesPage />} />
         <Route path="/workplaces/:id" element={<WorkplaceDetailPage />} />
         <Route path="/finance" element={<FinancePage />} />
+        <Route path="/finance/earnings" element={<WorkplaceEarningsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
