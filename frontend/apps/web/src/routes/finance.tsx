@@ -17,11 +17,16 @@ export function FinancePage() {
   const { data: projections } = useProjections(year);
   const { data: workplaces } = useWorkplaces();
 
-  // Client-side tax calculation using gross from summary
+  // Client-side tax calculation: project YTD to annual for current year
   const taxResult = useMemo(() => {
     const gross = summary?.gross_earnings ?? 0;
     if (gross === 0) return null;
-    return calculatePortugueseTax({ grossAnnualIncomeCents: gross, year });
+    let annualGross = gross;
+    if (year === currentYear) {
+      const monthsElapsed = new Date().getMonth() + 1;
+      annualGross = Math.round(gross * 12 / monthsElapsed);
+    }
+    return calculatePortugueseTax({ grossAnnualIncomeCents: annualGross, year });
   }, [summary?.gross_earnings, year]);
 
   return (
