@@ -109,7 +109,7 @@ export function ShiftConfirmCard({ shift, workplace, onConfirm, onCancel, isPend
                 {t('common.saving')}
               </>
             ) : (
-              t('dashboard.confirmShift')
+              t('dashboard.completeShift')
             )}
           </button>
           <button

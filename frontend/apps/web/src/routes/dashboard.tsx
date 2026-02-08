@@ -110,9 +110,9 @@ export function DashboardPage() {
     return mins > 0 ? `${whole}h ${mins}m` : `${whole}h`;
   };
 
-  // Past shifts that need confirmation
-  const unconfirmedShifts = pastShifts
-    ?.filter((s) => s.status !== 'confirmed' && s.status !== 'completed' && s.status !== 'cancelled')
+  // Past confirmed shifts that need completion
+  const shiftsToComplete = pastShifts
+    ?.filter((s) => s.status === 'confirmed')
     .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
   // Only non-cancelled, sorted by start time
@@ -131,7 +131,7 @@ export function DashboardPage() {
     return `${dateStr}, ${startStr}–${endStr}`;
   };
 
-  const handleConfirmShift = (shiftId: string, data: { patients_seen?: number; outside_visits?: number }) => {
+  const handleCompleteShift = (shiftId: string, data: { patients_seen?: number; outside_visits?: number }) => {
     updateShift.mutate({
       id: shiftId,
       data: { status: 'completed', ...data },
@@ -176,19 +176,19 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* Shifts to Confirm */}
-      {!shiftsLoading && unconfirmedShifts && unconfirmedShifts.length > 0 && (
+      {/* Shifts to Complete */}
+      {!shiftsLoading && shiftsToComplete && shiftsToComplete.length > 0 && (
         <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">{t('dashboard.shiftsToConfirm')} ({unconfirmedShifts.length})</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.shiftsToComplete')} ({shiftsToComplete.length})</h2>
           <div className="space-y-2">
-            {unconfirmedShifts.map((shift) => {
+            {shiftsToComplete.map((shift) => {
               const wp = workplaces?.find((w) => w.id === shift.workplace_id);
               return (
                 <ShiftConfirmCard
                   key={shift.id}
                   shift={shift}
                   workplace={wp}
-                  onConfirm={(data) => handleConfirmShift(shift.id, data)}
+                  onConfirm={(data) => handleCompleteShift(shift.id, data)}
                   onCancel={() => handleCancelShift(shift.id)}
                   isPending={updateShift.isPending}
                 />
@@ -265,6 +265,12 @@ export function DashboardPage() {
               className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
             >
               {t('dashboard.newWorkplace')}
+            </button>
+            <button
+              onClick={() => navigate('/finance/earnings')}
+              className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium"
+            >
+              {t('finance.viewEarnings')}
             </button>
             <button
               onClick={() => navigate('/finance')}

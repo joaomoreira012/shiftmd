@@ -26,6 +26,9 @@ export function ShiftDetailModal({ shiftId, onClose }: Props) {
   const updateMutation = useUpdateShift();
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCompleteForm, setShowCompleteForm] = useState(false);
+  const [patientsSeen, setPatientsSeen] = useState('');
+  const [outsideVisits, setOutsideVisits] = useState('');
 
   const STATUS_LABELS: Record<ShiftStatus, { label: string; color: string }> = {
     scheduled: { label: t('shifts.scheduled'), color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
@@ -40,10 +43,27 @@ export function ShiftDetailModal({ shiftId, onClose }: Props) {
 
   const workplace = shift ? workplaces?.find((w) => w.id === shift.workplace_id) : null;
 
+  const needsConsultation = workplace?.has_consultation_pay ?? false;
+  const needsOutsideVisits = workplace?.has_outside_visit_pay ?? false;
+  const needsCompleteForm = needsConsultation || needsOutsideVisits;
+
   const handleStatusChange = (newStatus: ShiftStatus) => {
-    if (shift) {
-      updateMutation.mutate({ id: shift.id, data: { status: newStatus } });
+    if (!shift) return;
+    if (newStatus === 'completed' && needsCompleteForm) {
+      setShowCompleteForm(true);
+      return;
     }
+    updateMutation.mutate({ id: shift.id, data: { status: newStatus } });
+  };
+
+  const handleCompleteSubmit = () => {
+    if (!shift) return;
+    if (needsConsultation && patientsSeen === '') return;
+    if (needsOutsideVisits && outsideVisits === '') return;
+    const data: Record<string, unknown> = { status: 'completed' as const };
+    if (needsConsultation) data.patients_seen = Number(patientsSeen);
+    if (needsOutsideVisits) data.outside_visits = Number(outsideVisits);
+    updateMutation.mutate({ id: shift.id, data });
   };
 
   const handleDelete = async () => {
@@ -164,22 +184,68 @@ export function ShiftDetailModal({ shiftId, onClose }: Props) {
               {STATUS_TRANSITIONS[shift.status].length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold mb-2">{t('shifts.changeStatus')}</h3>
-                  <div className="flex gap-2">
-                    {STATUS_TRANSITIONS[shift.status].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                        disabled={updateMutation.isPending}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                          status === 'cancelled'
-                            ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950'
-                            : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        {STATUS_LABELS[status].label}
-                      </button>
-                    ))}
-                  </div>
+                  {showCompleteForm ? (
+                    <div className="space-y-3">
+                      {needsConsultation && (
+                        <label className="flex items-center gap-2 text-sm">
+                          {t('shifts.patientsSeen')}<span className="text-red-500">*</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={patientsSeen}
+                            onChange={(e) => setPatientsSeen(e.target.value)}
+                            className="w-24 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                      )}
+                      {needsOutsideVisits && (
+                        <label className="flex items-center gap-2 text-sm">
+                          {t('shifts.outsideVisits')}<span className="text-red-500">*</span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={outsideVisits}
+                            onChange={(e) => setOutsideVisits(e.target.value)}
+                            className="w-24 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm"
+                          />
+                        </label>
+                      )}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleCompleteSubmit}
+                          disabled={updateMutation.isPending || (needsConsultation && patientsSeen === '') || (needsOutsideVisits && outsideVisits === '')}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                        >
+                          {STATUS_LABELS.completed.label}
+                        </button>
+                        <button
+                          onClick={() => setShowCompleteForm(false)}
+                          className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          {t('common.cancel')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      {STATUS_TRANSITIONS[shift.status].map((status) => (
+                        <button
+                          key={status}
+                          onClick={() => handleStatusChange(status)}
+                          disabled={updateMutation.isPending}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                            status === 'cancelled'
+                              ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950'
+                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          {STATUS_LABELS[status].label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
