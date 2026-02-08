@@ -21,7 +21,16 @@
     "quickActions": "Quick Actions",
     "newShift": "+ New Shift",
     "newWorkplace": "+ New Workplace",
-    "viewFinance": "View Finance Report"
+    "viewFinance": "View Finance Report",
+    "shiftsToConfirm": "Shifts to Confirm",
+    "confirmShift": "Confirm",
+    "allConfirmed": "All shifts confirmed!",
+    "fillRequired": "Fill required fields to confirm",
+    "cancelShift": "Cancel Shift",
+    "cancelShiftConfirm": "Cancel this shift? This will mark it as cancelled.",
+    "hoursThisWeek": "Hours This Week",
+    "hoursThisMonth": "Hours This Month",
+    "shiftsCount": "{{count}} shifts"
   },
   "calendar": {
     "title": "Calendar",
@@ -37,7 +46,12 @@
     "connected": "Connected",
     "synced": "Synced {{date}}",
     "syncNow": "Sync Now",
-    "syncing": "Syncing..."
+    "syncing": "Syncing...",
+    "exportJpeg": "Export as JPEG",
+    "exportPdf": "Export as PDF",
+    "exporting": "Exporting...",
+    "exportSuccess": "Calendar exported successfully",
+    "exportError": "Failed to export calendar"
   },
   "workplaces": {
     "title": "Workplaces",

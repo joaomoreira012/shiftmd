@@ -6,12 +6,15 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventInput, DateSelectArg, EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core';
 import type { EventResizeDoneArg } from '@fullcalendar/interaction';
+import { toast } from 'sonner';
 import { useShiftsInRange, useUpdateShift, useWorkplaces, useGCalStatus, useGCalSync } from '../lib/api';
 import { useAppStore } from '@doctor-tracker/shared/stores/appStore';
 import { formatEuros } from '@doctor-tracker/shared/utils/currency';
 import { ShiftFormModal } from '../components/shifts/ShiftFormModal';
 import { ShiftDetailModal } from '../components/shifts/ShiftDetailModal';
 import { Skeleton } from '../components/ui/Skeleton';
+import { ExportDropdown } from '../components/calendar/ExportDropdown';
+import { exportCalendar, type ExportFormat } from '../lib/calendar-export';
 import type { Shift } from '@doctor-tracker/shared/types/shift';
 
 type CalendarView = 'timeGridDay' | 'timeGridWeek' | 'dayGridMonth';
@@ -37,6 +40,7 @@ export function CalendarPage() {
   const { data: gcalStatus } = useGCalStatus();
   const gcalSync = useGCalSync();
   const [filterOpen, setFilterOpen] = useState(false);
+  const [exportingWorkplaceId, setExportingWorkplaceId] = useState<string | null>(null);
 
   // Date range for fetching shifts
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
@@ -113,6 +117,36 @@ export function CalendarPage() {
     }
   }, [updateShift]);
 
+  // Export calendar for a single workplace
+  const handleExport = useCallback(async (workplaceId: string, format: ExportFormat) => {
+    const el = calendarContainerRef.current;
+    if (!el) return;
+
+    const wp = workplaces?.find((w) => w.id === workplaceId);
+    if (!wp) return;
+
+    setExportingWorkplaceId(workplaceId);
+    const prevIds = useAppStore.getState().selectedWorkplaceIds;
+
+    try {
+      // Filter to only the target workplace
+      useAppStore.setState({ selectedWorkplaceIds: [workplaceId] });
+      // Wait for React to re-render with the filtered events
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      const calApi = calendarRef.current?.getApi();
+      const dateLabel = calApi?.view.title ?? '';
+
+      await exportCalendar({ element: el, workplaceName: wp.name, dateLabel, format });
+      toast.success(t('calendar.exportSuccess'));
+    } catch {
+      toast.error(t('calendar.exportError'));
+    } finally {
+      useAppStore.setState({ selectedWorkplaceIds: prevIds });
+      setExportingWorkplaceId(null);
+    }
+  }, [workplaces, t]);
+
   // Filter shifts by selected workplaces
   const filteredShifts = shifts?.filter((s) =>
     selectedWorkplaceIds.length === 0 || selectedWorkplaceIds.includes(s.workplace_id)
@@ -152,19 +186,25 @@ export function CalendarPage() {
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
         <h3 className="text-sm font-semibold mb-3">{t('calendar.workplaces')}</h3>
         {workplaces?.map((wp) => (
-          <label key={wp.id} className="flex items-center gap-2 py-1.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={selectedWorkplaceIds.length === 0 || selectedWorkplaceIds.includes(wp.id)}
-              onChange={() => toggleWorkplace(wp.id)}
-              className="rounded border-gray-300"
+          <div key={wp.id} className="flex items-center gap-1 py-1.5">
+            <label className="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+              <input
+                type="checkbox"
+                checked={selectedWorkplaceIds.length === 0 || selectedWorkplaceIds.includes(wp.id)}
+                onChange={() => toggleWorkplace(wp.id)}
+                className="rounded border-gray-300"
+              />
+              <span
+                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                style={{ backgroundColor: wp.color || '#6B7280' }}
+              />
+              <span className="text-sm truncate">{wp.name}</span>
+            </label>
+            <ExportDropdown
+              onExport={(format) => handleExport(wp.id, format)}
+              isExporting={exportingWorkplaceId === wp.id}
             />
-            <span
-              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              style={{ backgroundColor: wp.color || '#6B7280' }}
-            />
-            <span className="text-sm truncate">{wp.name}</span>
-          </label>
+          </div>
         ))}
         {(!workplaces || workplaces.length === 0) && (
           <p className="text-xs text-gray-400">{t('calendar.noWorkplaces')}</p>

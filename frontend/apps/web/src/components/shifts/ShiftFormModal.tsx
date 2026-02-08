@@ -44,23 +44,17 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
   const [workplaceId, setWorkplaceId] = useState(
     existingShift?.workplace_id || workplaces?.[0]?.id || ''
   );
-  const initialDay = defaultStart
-    ? defaultDayTimes(defaultStart)
-    : defaultDayTimes(new Date());
+  const initialDay = defaultDayTimes(defaultStart ?? new Date());
 
   const [startTime, setStartTime] = useState(
     existingShift
       ? toLocalDatetime(new Date(existingShift.start_time))
-      : defaultStart
-        ? toLocalDatetime(defaultStart)
-        : toLocalDatetime(initialDay.start)
+      : toLocalDatetime(initialDay.start)
   );
   const [endTime, setEndTime] = useState(
     existingShift
       ? toLocalDatetime(new Date(existingShift.end_time))
-      : defaultEnd
-        ? toLocalDatetime(defaultEnd)
-        : toLocalDatetime(initialDay.end)
+      : toLocalDatetime(initialDay.end)
   );
 
   const applyPreset = (preset: 'day' | 'night') => {
@@ -136,25 +130,25 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md m-4"
+        className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md m-4 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
           <h2 className="text-lg font-semibold">{isEditing ? t('shifts.editShift') : t('shifts.newShift')}</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
           {/* Workplace */}
           {!isEditing && (
             <div>
               <label className="block text-sm font-medium mb-1">{t('shifts.workplace') + ' *'}</label>
-              <div className="space-y-1.5">
+              <div className="flex flex-wrap gap-1.5">
                 {workplaces?.filter((w) => w.is_active).map((wp) => (
                   <label
                     key={wp.id}
-                    className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 border rounded-full cursor-pointer transition-colors text-sm ${
                       workplaceId === wp.id
-                        ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500'
+                        ? 'border-primary-500 bg-primary-500/10 ring-1 ring-primary-500 font-medium'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
@@ -167,10 +161,10 @@ export function ShiftFormModal({ defaultStart, defaultEnd, existingShift, onClos
                       className="sr-only"
                     />
                     <span
-                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{ backgroundColor: wp.color || '#6B7280' }}
                     />
-                    <span className="text-sm font-medium">{wp.name}</span>
+                    {wp.name}
                   </label>
                 ))}
               </div>

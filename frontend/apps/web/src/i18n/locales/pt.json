@@ -21,7 +21,16 @@
     "quickActions": "Acoes Rapidas",
     "newShift": "+ Novo Turno",
     "newWorkplace": "+ Novo Local",
-    "viewFinance": "Ver Relatorio Financeiro"
+    "viewFinance": "Ver Relatorio Financeiro",
+    "shiftsToConfirm": "Turnos para Confirmar",
+    "confirmShift": "Confirmar",
+    "allConfirmed": "Todos os turnos confirmados!",
+    "fillRequired": "Preencha os campos obrigatorios",
+    "cancelShift": "Cancelar Turno",
+    "cancelShiftConfirm": "Cancelar este turno? Isto vai marca-lo como cancelado.",
+    "hoursThisWeek": "Horas Esta Semana",
+    "hoursThisMonth": "Horas Este Mes",
+    "shiftsCount": "{{count}} turnos"
   },
   "calendar": {
     "title": "Calendario",
@@ -37,7 +46,12 @@
     "connected": "Ligado",
     "synced": "Sincronizado {{date}}",
     "syncNow": "Sincronizar",
-    "syncing": "A sincronizar..."
+    "syncing": "A sincronizar...",
+    "exportJpeg": "Exportar como JPEG",
+    "exportPdf": "Exportar como PDF",
+    "exporting": "A exportar...",
+    "exportSuccess": "Calendario exportado com sucesso",
+    "exportError": "Falha ao exportar calendario"
   },
   "workplaces": {
     "title": "Locais de Trabalho",

@@ -56,3 +56,34 @@ body {
 .calendar-container .fc .fc-timegrid-slot {
   height: 2.5rem;
 }
+
+/* Calendar export mode: expand scrollable areas and clean up for capture */
+.calendar-exporting .fc .fc-scroller,
+.calendar-exporting .fc .fc-scroller-harness {
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.calendar-exporting .fc .fc-toolbar button {
+  display: none;
+}
+
+.calendar-exporting .fc .fc-toolbar-title {
+  margin: 0 auto;
+}
+
+/* Force light-mode colors during export so dark-mode users get readable output */
+.calendar-exporting.calendar-container .fc {
+  --fc-border-color: rgb(229 231 235);
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: rgb(243 244 246 / 0.5);
+  --fc-today-bg-color: rgb(238 242 255 / 0.5);
+  --fc-neutral-text-color: rgb(107 114 128);
+  color: rgb(17 24 39);
+}
+
+.calendar-exporting.calendar-container {
+  background: #ffffff !important;
+  border-color: rgb(229 231 235) !important;
+  color: rgb(17 24 39) !important;
+}

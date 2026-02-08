@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { useShiftsInRange, useWorkplaces } from '../lib/api';
+import { toast } from 'sonner';
+import { useShiftsInRange, useUpdateShift, useWorkplaces } from '../lib/api';
 import { formatEuros } from '@doctor-tracker/shared/utils/currency';
 import { ShiftFormModal } from '../components/shifts/ShiftFormModal';
+import { ShiftConfirmCard } from '../components/shifts/ShiftConfirmCard';
 import { Skeleton } from '../components/ui/Skeleton';
 
 export function DashboardPage() {
@@ -11,6 +13,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const { data: workplaces, isLoading: wpLoading } = useWorkplaces();
   const [showNewShift, setShowNewShift] = useState(false);
+  const updateShift = useUpdateShift();
 
   // Fetch upcoming shifts: now -> 14 days ahead (memoized to avoid infinite re-fetch loop)
   const [startISO, endISO] = useMemo(() => {
@@ -20,7 +23,69 @@ export function DashboardPage() {
   }, []);
   const { data: upcomingShifts, isLoading: shiftsLoading } = useShiftsInRange(startISO, endISO);
 
-  const isLoading = wpLoading || shiftsLoading;
+  // Fetch past shifts for confirmation: 90 days ago -> now
+  const [pastStartISO, pastEndISO] = useMemo(() => {
+    const now = new Date();
+    const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 3600000);
+    return [ninetyDaysAgo.toISOString(), now.toISOString()];
+  }, []);
+  const { data: pastShifts, isLoading: pastLoading } = useShiftsInRange(pastStartISO, pastEndISO);
+
+  const isLoading = wpLoading || shiftsLoading || pastLoading;
+
+  // Compute hours this week and this month from all non-cancelled shifts
+  const { hoursThisWeek, shiftsThisWeek, hoursThisMonth, shiftsThisMonth } = useMemo(() => {
+    const allShifts = [...(pastShifts ?? []), ...(upcomingShifts ?? [])];
+    // Deduplicate by ID (overlap between past and upcoming at "now")
+    const seen = new Set<string>();
+    const unique = allShifts.filter((s) => {
+      if (seen.has(s.id)) return false;
+      seen.add(s.id);
+      return s.status !== 'cancelled';
+    });
+
+    const now = new Date();
+    // Start of current week (Monday)
+    const weekStart = new Date(now);
+    const day = weekStart.getDay();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    weekStart.setDate(weekStart.getDate() + diffToMonday);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    // Start/end of current month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    let hWeek = 0, sWeek = 0, hMonth = 0, sMonth = 0;
+    for (const s of unique) {
+      const start = new Date(s.start_time).getTime();
+      const end = new Date(s.end_time).getTime();
+      const hours = (end - start) / 3600000;
+      if (start >= weekStart.getTime() && start < weekEnd.getTime()) {
+        hWeek += hours;
+        sWeek++;
+      }
+      if (start >= monthStart.getTime() && start < monthEnd.getTime()) {
+        hMonth += hours;
+        sMonth++;
+      }
+    }
+    return { hoursThisWeek: hWeek, shiftsThisWeek: sWeek, hoursThisMonth: hMonth, shiftsThisMonth: sMonth };
+  }, [pastShifts, upcomingShifts]);
+
+  const formatHours = (h: number) => {
+    if (h === 0) return '0h';
+    const whole = Math.floor(h);
+    const mins = Math.round((h - whole) * 60);
+    return mins > 0 ? `${whole}h ${mins}m` : `${whole}h`;
+  };
+
+  // Past shifts that need confirmation
+  const unconfirmedShifts = pastShifts
+    ?.filter((s) => s.status !== 'confirmed' && s.status !== 'completed' && s.status !== 'cancelled')
+    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
   // Only non-cancelled, sorted by start time
   const sortedUpcoming = upcomingShifts
@@ -36,6 +101,25 @@ export function DashboardPage() {
     const startStr = s.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     const endStr = e.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
     return `${dateStr}, ${startStr}–${endStr}`;
+  };
+
+  const handleConfirmShift = (shiftId: string, data: { patients_seen?: number; outside_visits?: number }) => {
+    updateShift.mutate({
+      id: shiftId,
+      data: { status: 'completed', ...data },
+    }, {
+      onSuccess: () => toast.success(t('shifts.shiftUpdated')),
+    });
+  };
+
+  const handleCancelShift = (shiftId: string) => {
+    if (!window.confirm(t('dashboard.cancelShiftConfirm'))) return;
+    updateShift.mutate({
+      id: shiftId,
+      data: { status: 'cancelled' },
+    }, {
+      onSuccess: () => toast.success(t('shifts.shiftUpdated')),
+    });
   };
 
   return (
@@ -58,11 +142,33 @@ export function DashboardPage() {
           <>
             <StatCard title={t('dashboard.thisMonthGross')} value="---" subtitle={t('dashboard.vsLastMonth')} />
             <StatCard title={t('dashboard.thisMonthNet')} value="---" subtitle={t('dashboard.vsLastMonth')} />
-            <StatCard title={t('dashboard.irsEstimate')} value="---" subtitle={t('dashboard.effectiveRate')} />
-            <StatCard title={t('dashboard.socialSecurity')} value="---" subtitle={t('dashboard.quarterly')} />
+            <StatCard title={t('dashboard.hoursThisWeek')} value={formatHours(hoursThisWeek)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisWeek })} />
+            <StatCard title={t('dashboard.hoursThisMonth')} value={formatHours(hoursThisMonth)} subtitle={t('dashboard.shiftsCount', { count: shiftsThisMonth })} />
           </>
         )}
       </div>
+
+      {/* Shifts to Confirm */}
+      {!pastLoading && unconfirmedShifts && unconfirmedShifts.length > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800 p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.shiftsToConfirm')} ({unconfirmedShifts.length})</h2>
+          <div className="space-y-2">
+            {unconfirmedShifts.map((shift) => {
+              const wp = workplaces?.find((w) => w.id === shift.workplace_id);
+              return (
+                <ShiftConfirmCard
+                  key={shift.id}
+                  shift={shift}
+                  workplace={wp}
+                  onConfirm={(data) => handleConfirmShift(shift.id, data)}
+                  onCancel={() => handleCancelShift(shift.id)}
+                  isPending={updateShift.isPending}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Two columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
