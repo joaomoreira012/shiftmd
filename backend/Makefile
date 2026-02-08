@@ -9,10 +9,10 @@ build:
 	go build -o bin/$(BINARY_NAME) ./cmd/server
 
 run: build
-	set -a && [ -f ../.env ] && . ../.env; set +a && DT_JWT_SECRET=dev-secret-change-me ./bin/$(BINARY_NAME)
+	set -a && [ -f ../.env ] && . ../.env; set +a && DT_JWT__SECRET=dev-secret-change-me ./bin/$(BINARY_NAME)
 
 dev:
-	set -a && [ -f ../.env ] && . ../.env; set +a && DT_JWT_SECRET=dev-secret-change-me go run ./cmd/server
+	set -a && [ -f ../.env ] && . ../.env; set +a && DT_JWT__SECRET=dev-secret-change-me go run ./cmd/server
 
 # Testing
 test:

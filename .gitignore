@@ -13,7 +13,6 @@ vite.config.d.ts.map
 backend/bin/
 backend/coverage.out
 backend/config.local.yaml
-backend/config.yaml
 
 # Environment files
 .env

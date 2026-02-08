@@ -66,12 +66,13 @@ func Load() (*Config, error) {
 	}
 
 	// Load from environment variables (prefix: DT_)
-	// e.g., DT_SERVER_PORT=8080, DT_DATABASE_HOST=localhost
+	// Use __ (double underscore) for nesting, single _ stays literal.
+	// e.g., DT_SERVER__PORT=8080, DT_GOOGLE__CLIENT_ID=xxx
 	if err := k.Load(env.Provider("DT_", ".", func(s string) string {
-		return strings.Replace(
-			strings.ToLower(strings.TrimPrefix(s, "DT_")),
-			"_", ".", -1,
-		)
+		s = strings.TrimPrefix(s, "DT_")
+		s = strings.ToLower(s)
+		s = strings.ReplaceAll(s, "__", ".")
+		return s
 	}), nil); err != nil {
 		return nil, fmt.Errorf("loading env config: %w", err)
 	}
